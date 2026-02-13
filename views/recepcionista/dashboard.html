@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Panel Recepcionista</title>
+  <link rel="stylesheet" href="/css/recepcion.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <header class="navbar">
+    <button id="menuBtn">☰</button>
+    <h1>Centro Médico</h1>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <ul>
+      <li onclick="mostrarSeccion('dashboard')">📅 Citas</li>
+      <li onclick="mostrarSeccion('pacientes')">👤 Pacientes</li>
+      <li onclick="cerrarSesion()" style="color:#f87171;">🚪 Cerrar sesión</li>
+    </ul>
+  </aside>
+
+  <!-- CONTENIDO -->
+  <main class="content">
+
+    <!-- SECCION CITAS -->
+    <section id="dashboard" class="seccion activa">
+      <h2>Agendar Cita</h2>
+
+      <form id="formCita">
+        <select id="paciente" required>
+          <option value="">Selecciona paciente</option>
+        </select>
+
+        <select id="doctor" required>
+          <option value="">Selecciona doctor</option>
+        </select>
+
+        <input type="date" id="fecha" required />
+        <input type="time" id="hora" required />
+        <textarea id="nota" placeholder="Nota del paciente"></textarea>
+
+        <button type="submit">Agendar Cita</button>
+      </form>
+
+      <h3>Citas del día</h3>
+      <ul id="listaCitas"></ul>
+    </section>
+
+    <!-- SECCION PACIENTES -->
+    <section id="pacientes" class="seccion">
+      <h2>Registrar Paciente</h2>
+
+      <form id="formPaciente">
+        <input type="text" id="nuevoNombre" placeholder="Nombre completo" required />
+        <input type="text" id="nuevoTelefono" placeholder="Teléfono" />
+        <input type="email" id="nuevoCorreo" placeholder="Correo" />
+        <input type="date" id="nuevoNacimiento" required />
+        <button type="submit">Registrar Paciente</button>
+      </form>
+    </section>
+
+  </main>
+
+<script>
+
+  const sidebar = document.getElementById("sidebar");
+  const menuBtn = document.getElementById("menuBtn");
+
+  // Cerrar sidebar al hacer clic fuera
+  document.addEventListener("click", function (event) {
+    const isClickInsideSidebar = sidebar.contains(event.target);
+    const isClickOnMenuButton = menuBtn.contains(event.target);
+
+    if (!isClickInsideSidebar && !isClickOnMenuButton) {
+      sidebar.classList.remove("open");
+    }
+});
+
+
+  menuBtn.addEventListener("click", () => {
+    sidebar.classList.toggle("open");
+  });
+
+  function mostrarSeccion(id) {
+    document.querySelectorAll(".seccion").forEach(sec => {
+      sec.classList.remove("activa");
+    });
+    document.getElementById(id).classList.add("activa");
+    sidebar.classList.remove("open");
+  }
+
+  document.getElementById("formCita").addEventListener("submit", crearCita);
+  cargarCitasHoy();
+  document.getElementById("formPaciente").addEventListener("submit", crearPaciente);
+
+  async function cargarPacientes() {
+    const res = await fetch("/api/recepcion/pacientes");
+    const pacientes = await res.json();
+
+    const select = document.getElementById("paciente");
+    select.innerHTML = '<option value="">Selecciona paciente</option>';
+
+    pacientes.forEach(p => {
+      const option = document.createElement("option");
+      option.value = p.id;
+      option.textContent = p.nombre;
+      select.appendChild(option);
+    });
+  }
+
+  async function cargarDoctores() {
+    const res = await fetch("/api/recepcion/doctores");
+    const doctores = await res.json();
+
+    const select = document.getElementById("doctor");
+    select.innerHTML = '<option value="">Selecciona doctor</option>';
+
+    doctores.forEach(doc => {
+      const option = document.createElement("option");
+      option.value = doc.id;
+      option.textContent = doc.nombre + " - " + doc.especialidad;
+      select.appendChild(option);
+    });
+  }
+
+  async function crearPaciente(e) {
+    e.preventDefault();
+
+    const nombre = nuevoNombre.value;
+    const telefono = nuevoTelefono.value;
+    const correo = nuevoCorreo.value;
+    const fecha_nacimiento = nuevoNacimiento.value;
+
+    const res = await fetch("/api/recepcion/pacientes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nombre, telefono, correo, fecha_nacimiento })
+    });
+
+    const data = await res.json();
+    alert(data.message);
+
+    formPaciente.reset();
+    cargarPacientes();
+  }
+
+  async function crearCita(e) {
+    e.preventDefault();
+
+    const paciente_id = document.getElementById("paciente").value;
+    const doctor_id = document.getElementById("doctor").value;
+    const fechaValue = document.getElementById("fecha").value;
+    const horaValue = document.getElementById("hora").value;
+    const notaValue = document.getElementById("nota").value;
+
+    const res = await fetch("/api/recepcion/citas", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        paciente_id,
+        doctor_id,
+        fecha: fechaValue,
+        hora: horaValue,
+        nota: notaValue
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message);
+      return;
+    }
+
+    alert(data.message);
+
+    await cargarCitasHoy();
+
+    document.getElementById("formCita").reset();
+  }
+
+
+
+  async function cargarCitasHoy() {
+    const res = await fetch("/api/recepcion/citas-hoy");
+    const citas = await res.json();
+
+    const lista = document.getElementById("listaCitas");
+    lista.innerHTML = "";
+
+    citas.forEach(c => {
+      const li = document.createElement("li");
+
+      li.innerHTML = `
+      <strong>${c.hora}</strong> - 
+      ${c.paciente} con ${c.doctor}
+  
+      <span class="estado ${c.estado}">
+        ${c.estado}
+      </span>
+
+      ${c.estado === "Programada" ? `
+        <div class="acciones">
+          <button onclick="cambiarEstado(${c.id}, 'Atendida')">✔ Atendida</button>
+          <button onclick="cambiarEstado(${c.id}, 'Cancelada')">✖ Cancelar</button>
+        </div>
+      ` : ""}
+    `;
+
+      lista.appendChild(li);
+    });
+  }
+
+  async function cambiarEstado(id, nuevoEstado) {
+
+    if (!confirm("¿Seguro que deseas cambiar el estado?")) return;
+
+    const res = await fetch(`/api/recepcion/citas/${id}/estado`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ estado: nuevoEstado })
+    });
+
+    const data = await res.json();
+    alert(data.message);
+
+    await cargarCitasHoy();
+  }
+
+
+
+  window.onload = () => {
+    cargarPacientes();
+    cargarDoctores();
+    cargarCitasHoy();
+  };
+  function cerrarSesion() {
+  window.location.href = "/session/logout";
+  }
+
+
+</script>
+
+</body>
+</html>

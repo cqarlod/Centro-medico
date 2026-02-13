@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi Perfil · MedPanel</title>
+  <link rel="stylesheet" href="css/perfil.css" />
+</head>
+<body>
+  <div class="perfil-container">
+    
+    <!-- Header con mismo estilo del login -->
+    <div class="perfil-header">
+      <h1>Mi Perfil</h1>
+      <p>Gestiona tu información personal</p>
+    </div>
+
+    <!-- Foto de perfil -->
+    <div class="foto-section">
+      <div class="foto-wrapper">
+        <img id="fotoPerfil" src="img/default.png" alt="Foto de perfil" class="foto-perfil">
+        <div class="foto-overlay" onclick="document.getElementById('inputFoto').click()">
+          <span>Cambiar</span>
+        </div>
+      </div>
+      
+      <form id="fotoForm" enctype="multipart/form-data" style="display: none;">
+        <input type="file" name="foto" accept="image/*" id="inputFoto">
+      </form>
+      <button type="button" class="btn btn-outline" onclick="document.getElementById('inputFoto').click()">
+        Actualizar foto
+      </button>
+    </div>
+
+    <!-- Información del perfil -->
+    <div class="info-section">
+      <h2>Información personal</h2>
+      
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="info-label">Nombre completo</span>
+          <span class="info-value" id="nombre">Juan Pérez</span>
+        </div>
+        
+        <div class="info-item">
+          <span class="info-label">Correo electrónico</span>
+          <span class="info-value" id="correo">juan.perez@medpanel.com</span>
+        </div>
+        
+        <div class="info-item">
+          <span class="info-label">Rol</span>
+          <span class="info-value" id="rol">
+            <span class="rol-badge">Administrador</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cambiar contraseña -->
+    <div class="password-section">
+      <h2>Cambiar contraseña</h2>
+      
+      <form id="passwordForm">
+        <div class="campo">
+          <label for="actual">Contraseña actual</label>
+          <input type="password" id="actual" placeholder="••••••••" required>
+        </div>
+        
+        <div class="campo">
+          <label for="nueva">Nueva contraseña</label>
+          <input type="password" id="nueva" placeholder="••••••••" required>
+        </div>
+        
+        <div class="campo">
+          <label for="confirmar">Confirmar contraseña</label>
+          <input type="password" id="confirmar" placeholder="••••••••" required>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Actualizar contraseña</button>
+      </form>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="acciones">
+      <button id="logoutBtn" class="btn btn-logout">Cerrar sesión</button>
+    </div>
+
+    <!-- Mensajes -->
+    <div id="mensaje" class="mensaje"></div>
+  </div>
+
+  <script src="js/perfil.js"></script>
+</body>
+</html>

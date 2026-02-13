@@ -1,0 +1,168 @@
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: #f4f6f9;
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  background: #1e3a8a;
+  color: white;
+  padding: 15px;
+}
+
+.navbar h1 {
+  flex: 1;
+  text-align: center;
+  margin: 0;
+  font-size: 20px;
+}
+
+#menuBtn {
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: white;
+  cursor: pointer;
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: -220px;
+  width: 200px;
+  height: 100%;
+  background: #111827;
+  color: white;
+  padding-top: 60px;
+  transition: 0.3s;
+}
+
+.sidebar.open {
+  left: 0;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar li {
+  padding: 15px;
+  cursor: pointer;
+  border-bottom: 1px solid #1f2937;
+}
+
+.sidebar li:hover {
+  background: #374151;
+}
+
+.content {
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.seccion {
+  display: none;
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+}
+
+.seccion.activa {
+  display: block;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+input, select, textarea {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: #1e3a8a;
+}
+
+button {
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  background: #1e3a8a;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+button:hover {
+  background: #162e6b;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li {
+  background: #e5e7eb;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.estado {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  margin-left: 10px;
+  font-weight: bold;
+}
+
+.Programada {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.Cancelada {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.Atendida {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(-5px);
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0);
+  }
+}
+
+.estado.Programada {
+  color: #3b82f6;
+  font-weight: bold;
+}
+
+.estado.Atendida {
+  color: #22c55e;
+  font-weight: bold;
+}
+
+.estado.Cancelada {
+  color: #ef4444;
+  font-weight: bold;
+}
