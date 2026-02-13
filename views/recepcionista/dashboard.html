@@ -2,248 +2,454 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Panel Recepcionista</title>
-  <link rel="stylesheet" href="/css/recepcion.css" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recepcionista · MedPanel</title>
+  <link rel="stylesheet" href="/css/recepcion.css" />
+  <!-- Font Awesome para iconos -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 <body>
 
   <!-- NAVBAR -->
   <header class="navbar">
-    <button id="menuBtn">☰</button>
-    <h1>Centro Médico</h1>
+    <button id="menuBtn" class="menu-btn">
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="navbar-brand">
+      <i class="fas fa-hospital"></i>
+      <h1>MedPanel · Recepción</h1>
+    </div>
+    <div class="navbar-user">
+      <i class="fas fa-user-circle"></i>
+      <span id="usuarioNombre">Recepcionista</span>
+    </div>
   </header>
 
   <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <i class="fas fa-calendar-alt"></i>
+      <span>Menú</span>
+    </div>
     <ul>
-      <li onclick="mostrarSeccion('dashboard')">📅 Citas</li>
-      <li onclick="mostrarSeccion('pacientes')">👤 Pacientes</li>
-      <li onclick="cerrarSesion()" style="color:#f87171;">🚪 Cerrar sesión</li>
+      <li onclick="mostrarSeccion('dashboard')" class="active">
+        <i class="fas fa-calendar-plus"></i>
+        <span>Agendar Citas</span>
+      </li>
+      <li onclick="mostrarSeccion('pacientes')">
+        <i class="fas fa-users"></i>
+        <span>Pacientes</span>
+      </li>
+      <li onclick="window.location.href='/perfil'">
+        <i class="fas fa-user"></i>
+        <span>Mi Perfil</span>
+      </li>
+      <li onclick="cerrarSesion()" class="logout">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Cerrar sesión</span>
+      </li>
     </ul>
   </aside>
 
-  <!-- CONTENIDO -->
+  <!-- CONTENIDO PRINCIPAL -->
   <main class="content">
 
     <!-- SECCION CITAS -->
     <section id="dashboard" class="seccion activa">
-      <h2>Agendar Cita</h2>
+      <div class="section-header">
+        <h2><i class="fas fa-calendar-plus"></i> Agendar Nueva Cita</h2>
+      </div>
 
-      <form id="formCita">
-        <select id="paciente" required>
-          <option value="">Selecciona paciente</option>
-        </select>
+      <div class="card">
+        <form id="formCita" class="form-cita">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="paciente">
+                <i class="fas fa-user"></i> Paciente
+              </label>
+              <select id="paciente" required>
+                <option value="">Selecciona un paciente</option>
+              </select>
+            </div>
 
-        <select id="doctor" required>
-          <option value="">Selecciona doctor</option>
-        </select>
+            <div class="form-group">
+              <label for="doctor">
+                <i class="fas fa-user-md"></i> Doctor
+              </label>
+              <select id="doctor" required>
+                <option value="">Selecciona un doctor</option>
+              </select>
+            </div>
+          </div>
 
-        <input type="date" id="fecha" required />
-        <input type="time" id="hora" required />
-        <textarea id="nota" placeholder="Nota del paciente"></textarea>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="fecha">
+                <i class="fas fa-calendar"></i> Fecha
+              </label>
+              <input type="date" id="fecha" required />
+            </div>
 
-        <button type="submit">Agendar Cita</button>
-      </form>
+            <div class="form-group">
+              <label for="hora">
+                <i class="fas fa-clock"></i> Hora
+              </label>
+              <input type="time" id="hora" required />
+            </div>
+          </div>
 
-      <h3>Citas del día</h3>
-      <ul id="listaCitas"></ul>
+          <div class="form-group">
+            <label for="nota">
+              <i class="fas fa-sticky-note"></i> Nota (opcional)
+            </label>
+            <textarea id="nota" placeholder="Observaciones o notas del paciente..."></textarea>
+          </div>
+
+          <button type="submit" class="btn-primary">
+            <i class="fas fa-save"></i> Agendar Cita
+          </button>
+        </form>
+      </div>
+
+      <div class="section-header" style="margin-top: 40px;">
+        <h2><i class="fas fa-list"></i> Citas del Día</h2>
+      </div>
+
+      <div class="citas-grid" id="listaCitas">
+        <!-- Las citas se cargan dinámicamente -->
+      </div>
     </section>
 
     <!-- SECCION PACIENTES -->
     <section id="pacientes" class="seccion">
-      <h2>Registrar Paciente</h2>
+      <div class="section-header">
+        <h2><i class="fas fa-user-plus"></i> Registrar Nuevo Paciente</h2>
+      </div>
 
-      <form id="formPaciente">
-        <input type="text" id="nuevoNombre" placeholder="Nombre completo" required />
-        <input type="text" id="nuevoTelefono" placeholder="Teléfono" />
-        <input type="email" id="nuevoCorreo" placeholder="Correo" />
-        <input type="date" id="nuevoNacimiento" required />
-        <button type="submit">Registrar Paciente</button>
-      </form>
+      <div class="card">
+        <form id="formPaciente" class="form-paciente">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="nuevoNombre">
+                <i class="fas fa-user"></i> Nombre completo
+              </label>
+              <input type="text" id="nuevoNombre" placeholder="Ej. Juan Pérez" required />
+            </div>
+
+            <div class="form-group">
+              <label for="nuevoTelefono">
+                <i class="fas fa-phone"></i> Teléfono
+              </label>
+              <input type="text" id="nuevoTelefono" placeholder="Ej. 555-1234" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="nuevoCorreo">
+                <i class="fas fa-envelope"></i> Correo electrónico
+              </label>
+              <input type="email" id="nuevoCorreo" placeholder="ejemplo@correo.com" />
+            </div>
+
+            <div class="form-group">
+              <label for="nuevoNacimiento">
+                <i class="fas fa-birthday-cake"></i> Fecha de nacimiento
+              </label>
+              <input type="date" id="nuevoNacimiento" required />
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary">
+            <i class="fas fa-user-plus"></i> Registrar Paciente
+          </button>
+        </form>
+      </div>
+
+      <div class="section-header" style="margin-top: 40px;">
+        <h2><i class="fas fa-search"></i> Buscar Pacientes</h2>
+      </div>
+
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" id="buscarPaciente" placeholder="Buscar por nombre o teléfono...">
+      </div>
+
+      <div class="pacientes-list" id="listaPacientes">
+        <!-- Lista de pacientes cargados -->
+      </div>
     </section>
 
   </main>
 
-<script>
+  <!-- Mensaje flotante para notificaciones -->
+  <div id="toast" class="toast"></div>
 
-  const sidebar = document.getElementById("sidebar");
-  const menuBtn = document.getElementById("menuBtn");
+  <script>
+    const sidebar = document.getElementById("sidebar");
+    const menuBtn = document.getElementById("menuBtn");
 
-  // Cerrar sidebar al hacer clic fuera
-  document.addEventListener("click", function (event) {
-    const isClickInsideSidebar = sidebar.contains(event.target);
-    const isClickOnMenuButton = menuBtn.contains(event.target);
+    // Toggle sidebar
+    menuBtn.addEventListener("click", () => {
+      sidebar.classList.toggle("open");
+    });
 
-    if (!isClickInsideSidebar && !isClickOnMenuButton) {
+    // Cerrar sidebar al hacer clic fuera
+    document.addEventListener("click", function (event) {
+      const isClickInsideSidebar = sidebar.contains(event.target);
+      const isClickOnMenuButton = menuBtn.contains(event.target);
+
+      if (!isClickInsideSidebar && !isClickOnMenuButton) {
+        sidebar.classList.remove("open");
+      }
+    });
+
+    // Mostrar sección
+    function mostrarSeccion(id) {
+      document.querySelectorAll(".seccion").forEach(sec => {
+        sec.classList.remove("activa");
+      });
+      document.getElementById(id).classList.add("activa");
+      
+      // Actualizar active en sidebar
+      document.querySelectorAll(".sidebar li").forEach(li => {
+        li.classList.remove("active");
+      });
+      event.currentTarget.classList.add("active");
+      
       sidebar.classList.remove("open");
     }
-});
 
-
-  menuBtn.addEventListener("click", () => {
-    sidebar.classList.toggle("open");
-  });
-
-  function mostrarSeccion(id) {
-    document.querySelectorAll(".seccion").forEach(sec => {
-      sec.classList.remove("activa");
-    });
-    document.getElementById(id).classList.add("activa");
-    sidebar.classList.remove("open");
-  }
-
-  document.getElementById("formCita").addEventListener("submit", crearCita);
-  cargarCitasHoy();
-  document.getElementById("formPaciente").addEventListener("submit", crearPaciente);
-
-  async function cargarPacientes() {
-    const res = await fetch("/api/recepcion/pacientes");
-    const pacientes = await res.json();
-
-    const select = document.getElementById("paciente");
-    select.innerHTML = '<option value="">Selecciona paciente</option>';
-
-    pacientes.forEach(p => {
-      const option = document.createElement("option");
-      option.value = p.id;
-      option.textContent = p.nombre;
-      select.appendChild(option);
-    });
-  }
-
-  async function cargarDoctores() {
-    const res = await fetch("/api/recepcion/doctores");
-    const doctores = await res.json();
-
-    const select = document.getElementById("doctor");
-    select.innerHTML = '<option value="">Selecciona doctor</option>';
-
-    doctores.forEach(doc => {
-      const option = document.createElement("option");
-      option.value = doc.id;
-      option.textContent = doc.nombre + " - " + doc.especialidad;
-      select.appendChild(option);
-    });
-  }
-
-  async function crearPaciente(e) {
-    e.preventDefault();
-
-    const nombre = nuevoNombre.value;
-    const telefono = nuevoTelefono.value;
-    const correo = nuevoCorreo.value;
-    const fecha_nacimiento = nuevoNacimiento.value;
-
-    const res = await fetch("/api/recepcion/pacientes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nombre, telefono, correo, fecha_nacimiento })
-    });
-
-    const data = await res.json();
-    alert(data.message);
-
-    formPaciente.reset();
-    cargarPacientes();
-  }
-
-  async function crearCita(e) {
-    e.preventDefault();
-
-    const paciente_id = document.getElementById("paciente").value;
-    const doctor_id = document.getElementById("doctor").value;
-    const fechaValue = document.getElementById("fecha").value;
-    const horaValue = document.getElementById("hora").value;
-    const notaValue = document.getElementById("nota").value;
-
-    const res = await fetch("/api/recepcion/citas", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        paciente_id,
-        doctor_id,
-        fecha: fechaValue,
-        hora: horaValue,
-        nota: notaValue
-      })
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.message);
-      return;
+    // Toast notification
+    function mostrarToast(mensaje, tipo = 'success') {
+      const toast = document.getElementById('toast');
+      toast.textContent = mensaje;
+      toast.className = `toast ${tipo}`;
+      toast.style.display = 'block';
+      
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 3000);
     }
 
-    alert(data.message);
+    // Cerrar sesión
+    function cerrarSesion() {
+      window.location.href = "/session/logout";
+    }
 
-    await cargarCitasHoy();
+    // ==================================
+    // FUNCIONES DE LA API
+    // ==================================
 
-    document.getElementById("formCita").reset();
-  }
+    // Cargar pacientes en el select
+    async function cargarPacientes() {
+      try {
+        const res = await fetch("/api/recepcion/pacientes");
+        const pacientes = await res.json();
 
+        const select = document.getElementById("paciente");
+        select.innerHTML = '<option value="">Selecciona un paciente</option>';
 
+        pacientes.forEach(p => {
+          const option = document.createElement("option");
+          option.value = p.id;
+          option.textContent = p.nombre;
+          select.appendChild(option);
+        });
 
-  async function cargarCitasHoy() {
-    const res = await fetch("/api/recepcion/citas-hoy");
-    const citas = await res.json();
+        // También cargar lista de pacientes
+        const lista = document.getElementById("listaPacientes");
+        if (lista) {
+          lista.innerHTML = pacientes.map(p => `
+            <div class="paciente-card">
+              <div class="paciente-info">
+                <strong>${p.nombre}</strong>
+                <span>📞 ${p.telefono || 'Sin teléfono'}</span>
+                <span>📧 ${p.correo || 'Sin correo'}</span>
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (error) {
+        console.error('Error cargando pacientes:', error);
+      }
+    }
 
-    const lista = document.getElementById("listaCitas");
-    lista.innerHTML = "";
+    // Cargar doctores
+    async function cargarDoctores() {
+      try {
+        const res = await fetch("/api/recepcion/doctores");
+        const doctores = await res.json();
 
-    citas.forEach(c => {
-      const li = document.createElement("li");
+        const select = document.getElementById("doctor");
+        select.innerHTML = '<option value="">Selecciona un doctor</option>';
 
-      li.innerHTML = `
-      <strong>${c.hora}</strong> - 
-      ${c.paciente} con ${c.doctor}
-  
-      <span class="estado ${c.estado}">
-        ${c.estado}
-      </span>
+        doctores.forEach(doc => {
+          const option = document.createElement("option");
+          option.value = doc.id;
+          option.textContent = `${doc.nombre} - ${doc.especialidad}`;
+          select.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Error cargando doctores:', error);
+      }
+    }
 
-      ${c.estado === "Programada" ? `
-        <div class="acciones">
-          <button onclick="cambiarEstado(${c.id}, 'Atendida')">✔ Atendida</button>
-          <button onclick="cambiarEstado(${c.id}, 'Cancelada')">✖ Cancelar</button>
-        </div>
-      ` : ""}
-    `;
+    // Crear paciente
+    document.getElementById("formPaciente").addEventListener("submit", async (e) => {
+      e.preventDefault();
 
-      lista.appendChild(li);
+      const nombre = document.getElementById("nuevoNombre").value;
+      const telefono = document.getElementById("nuevoTelefono").value;
+      const correo = document.getElementById("nuevoCorreo").value;
+      const fecha_nacimiento = document.getElementById("nuevoNacimiento").value;
+
+      try {
+        const res = await fetch("/api/recepcion/pacientes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nombre, telefono, correo, fecha_nacimiento })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          mostrarToast('Paciente registrado correctamente', 'success');
+          document.getElementById("formPaciente").reset();
+          cargarPacientes();
+        } else {
+          mostrarToast(data.message || 'Error al registrar', 'error');
+        }
+      } catch (error) {
+        mostrarToast('Error de conexión', 'error');
+      }
     });
-  }
 
-  async function cambiarEstado(id, nuevoEstado) {
+    // Crear cita
+    document.getElementById("formCita").addEventListener("submit", async (e) => {
+      e.preventDefault();
 
-    if (!confirm("¿Seguro que deseas cambiar el estado?")) return;
+      const paciente_id = document.getElementById("paciente").value;
+      const doctor_id = document.getElementById("doctor").value;
+      const fecha = document.getElementById("fecha").value;
+      const hora = document.getElementById("hora").value;
+      const nota = document.getElementById("nota").value;
 
-    const res = await fetch(`/api/recepcion/citas/${id}/estado`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ estado: nuevoEstado })
+      if (!paciente_id || !doctor_id) {
+        mostrarToast('Selecciona paciente y doctor', 'error');
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/recepcion/citas", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ paciente_id, doctor_id, fecha, hora, nota })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          mostrarToast('Cita agendada correctamente', 'success');
+          document.getElementById("formCita").reset();
+          cargarCitasHoy();
+        } else {
+          mostrarToast(data.message || 'Error al agendar', 'error');
+        }
+      } catch (error) {
+        mostrarToast('Error de conexión', 'error');
+      }
     });
 
-    const data = await res.json();
-    alert(data.message);
+    // Cargar citas del día
+    async function cargarCitasHoy() {
+      try {
+        const res = await fetch("/api/recepcion/citas-hoy");
+        const citas = await res.json();
 
-    await cargarCitasHoy();
-  }
+        const lista = document.getElementById("listaCitas");
+        
+        if (citas.length === 0) {
+          lista.innerHTML = '<div class="empty-state">No hay citas programadas para hoy</div>';
+          return;
+        }
 
+        lista.innerHTML = citas.map(c => `
+          <div class="cita-card ${c.estado.toLowerCase()}">
+            <div class="cita-hora">
+              <i class="fas fa-clock"></i>
+              <span>${c.hora}</span>
+            </div>
+            <div class="cita-info">
+              <div class="cita-paciente">
+                <i class="fas fa-user"></i> ${c.paciente}
+              </div>
+              <div class="cita-doctor">
+                <i class="fas fa-user-md"></i> ${c.doctor}
+              </div>
+              ${c.nota ? `<div class="cita-nota">📝 ${c.nota}</div>` : ''}
+            </div>
+            <div class="cita-estado">
+              <span class="estado-badge ${c.estado}">${c.estado}</span>
+            </div>
+            ${c.estado === 'Programada' ? `
+              <div class="cita-acciones">
+                <button onclick="cambiarEstado(${c.id}, 'Atendida')" class="btn-icon success" title="Marcar como atendida">
+                  <i class="fas fa-check"></i>
+                </button>
+                <button onclick="cambiarEstado(${c.id}, 'Cancelada')" class="btn-icon danger" title="Cancelar cita">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            ` : ''}
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Error cargando citas:', error);
+      }
+    }
 
+    // Cambiar estado de cita
+    async function cambiarEstado(id, nuevoEstado) {
+      if (!confirm(`¿Seguro que deseas marcar como ${nuevoEstado}?`)) return;
 
-  window.onload = () => {
-    cargarPacientes();
-    cargarDoctores();
-    cargarCitasHoy();
-  };
-  function cerrarSesion() {
-  window.location.href = "/session/logout";
-  }
+      try {
+        const res = await fetch(`/api/recepcion/citas/${id}/estado`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ estado: nuevoEstado })
+        });
 
+        const data = await res.json();
 
-</script>
+        if (res.ok) {
+          mostrarToast(`Cita ${nuevoEstado.toLowerCase()}`, 'success');
+          cargarCitasHoy();
+        } else {
+          mostrarToast(data.message || 'Error al actualizar', 'error');
+        }
+      } catch (error) {
+        mostrarToast('Error de conexión', 'error');
+      }
+    }
 
+    // Buscar pacientes
+    document.getElementById('buscarPaciente')?.addEventListener('input', (e) => {
+      const termino = e.target.value.toLowerCase();
+      const cards = document.querySelectorAll('.paciente-card');
+      
+      cards.forEach(card => {
+        const texto = card.textContent.toLowerCase();
+        card.style.display = texto.includes(termino) ? 'flex' : 'none';
+      });
+    });
+
+    // Inicializar
+    window.onload = () => {
+      cargarPacientes();
+      cargarDoctores();
+      cargarCitasHoy();
+    };
+  </script>
 </body>
 </html>

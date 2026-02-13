@@ -5,9 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mi Perfil · MedPanel</title>
   <link rel="stylesheet" href="css/perfil.css" />
+  <!-- Font Awesome para iconos -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 <body>
   <div class="perfil-container">
+    
+    <!-- Botón de regreso -->
+    <div class="back-button">
+      <button onclick="window.location.href='/recepcionista/dashboard'" class="btn-back">
+        <i class="fas fa-arrow-left"></i>
+        Volver al Panel
+      </button>
+    </div>
     
     <!-- Header con mismo estilo del login -->
     <div class="perfil-header">
@@ -27,7 +37,8 @@
       <form id="fotoForm" enctype="multipart/form-data" style="display: none;">
         <input type="file" name="foto" accept="image/*" id="inputFoto">
       </form>
-      <button type="button" class="btn btn-outline" onclick="document.getElementById('inputFoto').click()">
+      <button type="button" class="btn-outline" onclick="document.getElementById('inputFoto').click()">
+        <i class="fas fa-camera"></i>
         Actualizar foto
       </button>
     </div>
@@ -50,8 +61,13 @@
         <div class="info-item">
           <span class="info-label">Rol</span>
           <span class="info-value" id="rol">
-            <span class="rol-badge">Administrador</span>
+            <span class="rol-badge">Recepcionista</span>
           </span>
+        </div>
+        
+        <div class="info-item">
+          <span class="info-label">Miembro desde</span>
+          <span class="info-value" id="fechaRegistro">Enero 2024</span>
         </div>
       </div>
     </div>
@@ -76,13 +92,19 @@
           <input type="password" id="confirmar" placeholder="••••••••" required>
         </div>
         
-        <button type="submit" class="btn btn-primary">Actualizar contraseña</button>
+        <button type="submit" class="btn-primary">
+          <i class="fas fa-key"></i>
+          Actualizar contraseña
+        </button>
       </form>
     </div>
 
     <!-- Botones de acción -->
     <div class="acciones">
-      <button id="logoutBtn" class="btn btn-logout">Cerrar sesión</button>
+      <button id="logoutBtn" class="btn-logout">
+        <i class="fas fa-sign-out-alt"></i>
+        Cerrar sesión
+      </button>
     </div>
 
     <!-- Mensajes -->
