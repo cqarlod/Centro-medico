@@ -9,16 +9,19 @@ router.use(hasRole("recepcionista"));
 
 // Obtener doctores
 router.get("/doctores", async (req, res) => {
-  try {
-    const [rows] = await db.query("SELECT * FROM doctores");
-    res.json(rows);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+  const [rows] = await db.query(`
+    SELECT 
+      d.id,
+      u.nombre,
+      d.especialidad
+    FROM doctores d
+    JOIN usuarios u ON d.usuario_id = u.id
+  `);
+
+  res.json(rows);
 });
 
 // Crear cita
-// Crear cita - CORREGIDO
 router.post("/citas", async (req, res) => {
   try {
     const { paciente_id, doctor_id, fecha, hora, nota } = req.body;
@@ -51,12 +54,13 @@ router.post("/citas", async (req, res) => {
     // Obtener la cita creada con nombres
     const [[citaNueva]] = await db.query(
       `SELECT c.id, c.hora, c.estado, 
-              p.nombre AS paciente, 
-              d.nombre AS doctor
-       FROM citas c
-       JOIN pacientes p ON c.paciente_id = p.id
-       JOIN doctores d ON c.doctor_id = d.id
-       WHERE c.id = ?`,
+          p.nombre AS paciente, 
+          u.nombre AS doctor
+      FROM citas c
+      JOIN pacientes p ON c.paciente_id = p.id
+      JOIN doctores d ON c.doctor_id = d.id
+      JOIN usuarios u ON d.usuario_id = u.id
+      WHERE c.id = ?`,
       [result.insertId]
     );
 
@@ -79,16 +83,21 @@ router.post("/citas", async (req, res) => {
 router.get("/citas-hoy", async (req, res) => {
   try {
     const [rows] = await db.query(`
-      SELECT c.*, p.nombre AS paciente, d.nombre AS doctor
+      SELECT 
+        c.*, 
+        p.nombre AS paciente, 
+        u.nombre AS doctor
       FROM citas c
       JOIN pacientes p ON c.paciente_id = p.id
       JOIN doctores d ON c.doctor_id = d.id
+      JOIN usuarios u ON d.usuario_id = u.id
       WHERE c.fecha = CURDATE()
       ORDER BY c.hora ASC
     `);
 
     res.json(rows);
   } catch (error) {
+    console.error("Error en /citas-hoy:", error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -138,6 +147,76 @@ router.post("/pacientes", async (req, res) => {
     });
 
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Obtener todos los doctores para el filtro del calendario
+router.get("/doctores-lista", async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT 
+        d.id,
+        u.nombre,
+        d.especialidad
+      FROM doctores d
+      JOIN usuarios u ON d.usuario_id = u.id
+      ORDER BY u.nombre ASC
+    `);
+    res.json(rows);
+  } catch (error) {
+    console.error("Error en /doctores-lista:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Obtener citas para el calendario con filtros
+router.get("/citas-calendario", async (req, res) => {
+  try {
+    const { doctor_id, fecha_inicio, fecha_fin } = req.query;
+    
+    let query = `
+      SELECT 
+        c.id,
+        c.fecha,
+        c.hora,
+        c.estado,
+        c.nota,
+        p.nombre AS paciente,
+        p.telefono AS paciente_telefono,
+        u.nombre AS doctor,
+        d.id AS doctor_id
+      FROM citas c
+      JOIN pacientes p ON c.paciente_id = p.id
+      JOIN doctores d ON c.doctor_id = d.id
+      JOIN usuarios u ON d.usuario_id = u.id
+      WHERE 1=1
+    `;
+    
+    const params = [];
+    
+    if (doctor_id && doctor_id !== 'todos') {
+      query += " AND d.id = ?";
+      params.push(doctor_id);
+    }
+    
+    if (fecha_inicio) {
+      query += " AND c.fecha >= ?";
+      params.push(fecha_inicio);
+    }
+    
+    if (fecha_fin) {
+      query += " AND c.fecha <= ?";
+      params.push(fecha_fin);
+    }
+    
+    query += " ORDER BY c.fecha ASC, c.hora ASC";
+    
+    const [rows] = await db.query(query, params);
+    res.json(rows);
+    
+  } catch (error) {
+    console.error("❌ Error en /citas-calendario:", error);
     res.status(500).json({ error: error.message });
   }
 });
