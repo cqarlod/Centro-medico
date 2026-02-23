@@ -9,16 +9,17 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: "Datos incompletos" });
     }
 
-    const [rows] = await db.query(
-      "SELECT * FROM usuarios WHERE correo = ?",
+    // PostgreSQL: query devuelve { rows } NO [rows]
+    const result = await db.query(
+      "SELECT * FROM usuarios WHERE correo = $1",
       [correo]
     );
 
-    if (rows.length === 0) {
+    if (result.rows.length === 0) {
       return res.status(401).json({ message: "Usuario no encontrado" });
     }
 
-    const usuario = rows[0];
+    const usuario = result.rows[0];
 
     const passwordValido = await bcrypt.compare(password, usuario.password);
 
@@ -29,11 +30,10 @@ exports.login = async (req, res) => {
     const rol = usuario.rol.toLowerCase();
 
     if (!["admin", "doctor", "recepcionista"].includes(rol)) {
-    return res.status(403).json({ message: "Rol no permitido" });
+      return res.status(403).json({ message: "Rol no permitido" });
     }
 
-
-    //Guardar sesion
+    // Guardar sesion
     req.session.usuario = {
       id: usuario.id,
       nombre: usuario.nombre,
@@ -63,12 +63,13 @@ exports.cambiarPassword = async (req, res) => {
 
     const usuarioId = req.session.usuario.id;
 
-    const [rows] = await db.query(
-      "SELECT * FROM usuarios WHERE id = ?",
+    // PostgreSQL: query con $1
+    const result = await db.query(
+      "SELECT * FROM usuarios WHERE id = $1",
       [usuarioId]
     );
 
-    const usuario = rows[0];
+    const usuario = result.rows[0];
 
     const passwordValido = await bcrypt.compare(actual, usuario.password);
 
@@ -79,14 +80,14 @@ exports.cambiarPassword = async (req, res) => {
     const nuevaHash = await bcrypt.hash(nueva, 10);
 
     await db.query(
-      "UPDATE usuarios SET password = ? WHERE id = ?",
+      "UPDATE usuarios SET password = $1 WHERE id = $2",
       [nuevaHash, usuarioId]
     );
 
     res.json({ message: "Contraseña actualizada" });
 
   } catch (error) {
+    console.error("ERROR cambiarPassword:", error);
     res.status(500).json({ message: "Error del servidor" });
   }
 };
-
