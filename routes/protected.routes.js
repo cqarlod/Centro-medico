@@ -2,17 +2,17 @@ const express = require("express");
 const router = express.Router();
 
 const auth = require("../middlewares/auth.middleware");
-const role = require("../middlewares/role.middleware");
+const { autorizarRol } = require("../middlewares/role.middleware");
 
-router.get("/admin", role("admin"), (req, res) => {
+router.get("/admin", autorizarRol("admin"), (req, res) => {
   res.json({ message: "Bienvenido Admin" });
 });
 
-router.get("/doctor", role("doctor"), (req, res) => {
+router.get("/doctor", autorizarRol("doctor"), (req, res) => {
   res.json({ message: "Bienvenido Doctor" });
 });
 
-router.get("/paciente", role("paciente"), (req, res) => {
+router.get("/paciente", autorizarRol("paciente"), (req, res) => {
   res.json({ message: "Bienvenido Paciente" });
 });
 

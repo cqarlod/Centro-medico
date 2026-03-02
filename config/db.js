@@ -1,10 +1,12 @@
-const mysql = require('mysql2/promise');
+const { createClient } = require('@supabase/supabase-js');
 
-const db = mysql.createPool({
-  host: 'localhost',
-  user: 'root',
-  password: '1234',
-  database: 'centro_medico_citas'
-});
+const supabaseUrl = process.env.SUPABASE_URL || 'https://tu-proyecto.supabase.co';
+const supabaseKey = process.env.SUPABASE_KEY || 'TU_ANON_KEY';
 
-module.exports = db;
+if (supabaseUrl === 'https://tu-proyecto.supabase.co') {
+  console.warn("⚠️  ADVERTENCIA: No se encontró SUPABASE_URL en el archivo .env. Por favor añádelo.");
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+module.exports = supabase;

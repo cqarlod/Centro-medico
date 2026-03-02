@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Doctor · MedPanel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 0;
+        }
+
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        #notificaciones-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .alert {
+            background-color: #fff;
+            border-left: 5px solid #3498db;
+            padding: 15px 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .alert h4 {
+            margin: 0 0 5px 0;
+            color: #2c3e50;
+        }
+
+        .alert p {
+            margin: 0;
+            color: #7f8c8d;
+        }
+
+        .alert-btn {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .alert-btn:hover {
+            background-color: #27ae60;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .logout {
+            color: #e74c3c;
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="header">
+        <h2><i class="fas fa-user-md"></i> Panel Médico: <span id="doctorNombre">Cargando...</span></h2>
+        <a href="/session/logout" class="logout"><i class="fas fa-sign-out-alt"></i> Salir</a>
+    </header>
+
+    <div class="container">
+        <h3><i class="fas fa-bell"></i> Avisos de Llegada</h3>
+        <p>Los pacientes que han llegado a recepción aparecerán aquí.</p>
+        <div id="notificaciones-container"></div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/realtime.js"></script>
+
+    <script>
+        let miIdDoctor = null;
+
+        async function cargarMiSesion() {
+            try {
+                const res = await fetch("/session/me");
+                if (!res.ok) throw new Error("No sesión");
+                const usuario = await res.json();
+
+                miIdDoctor = usuario.id;
+                document.getElementById("doctorNombre").textContent = "Dr. " + usuario.nombre;
+
+                // Iniciar socket ya con el ID correcto
+                iniciarSocket();
+            } catch (error) {
+                console.error("Error obteniendo sesión", error);
+            }
+        }
+
+        function iniciarSocket() {
+            // Escuchar avisos de la recepción
+            socket.on(`doctor-${miIdDoctor}`, (data) => {
+                // Crear dinámicamente el aviso en pantalla
+                const areaNotificaciones = document.getElementById('notificaciones-container');
+
+                // ID seguro para DOM (quitar espacios en nombre)
+                const safeId = data.paciente.replace(/\s+/g, '-');
+
+                const nuevaAlerta = `
+    <div class="alert alert-info" id="alerta-${safeId}">
+        <div>
+            <h4><i class="fas fa-user-injured"></i> ${data.paciente}</h4>
+            <p>Paciente esperando en sala</p>
+        </div>
+        <button class="alert-btn" onclick="confirmarPaso('${data.paciente}', ${data.recepcionistaId}, '${safeId}')">
+            <i class="fas fa-door-open"></i> Autorizar Paso
+        </button>
+    </div>
+    `;
+                areaNotificaciones.innerHTML += nuevaAlerta;
+
+                // Sonido de alerta nueva
+                new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play().catch(e => console.log(e));
+            });
+        }
+
+        function confirmarPaso(nombre, recepId, safeId) {
+            responderAlPaso(nombre, recepId);
+            const alerta = document.getElementById(`alerta-${safeId}`);
+            if (alerta) alerta.remove();
+        }
+
+        window.onload = cargarMiSesion;
+    </script>
+</body>
+
+</html>

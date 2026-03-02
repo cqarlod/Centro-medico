@@ -9,10 +9,12 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: "Datos incompletos" });
     }
 
-    const [rows] = await db.query(
-      "SELECT * FROM usuarios WHERE correo = ?",
-      [correo]
-    );
+    const { data: rows, error: queryError } = await db
+      .from('usuarios')
+      .select('*')
+      .eq('correo', correo);
+
+    if (queryError) throw queryError;
 
     if (rows.length === 0) {
       return res.status(401).json({ message: "Usuario no encontrado" });
@@ -29,7 +31,7 @@ exports.login = async (req, res) => {
     const rol = usuario.rol.toLowerCase();
 
     if (!["admin", "doctor", "recepcionista"].includes(rol)) {
-    return res.status(403).json({ message: "Rol no permitido" });
+      return res.status(403).json({ message: "Rol no permitido" });
     }
 
 
@@ -63,10 +65,12 @@ exports.cambiarPassword = async (req, res) => {
 
     const usuarioId = req.session.usuario.id;
 
-    const [rows] = await db.query(
-      "SELECT * FROM usuarios WHERE id = ?",
-      [usuarioId]
-    );
+    const { data: rows, error: queryError } = await db
+      .from('usuarios')
+      .select('*')
+      .eq('id', usuarioId);
+
+    if (queryError) throw queryError;
 
     const usuario = rows[0];
 
@@ -78,10 +82,12 @@ exports.cambiarPassword = async (req, res) => {
 
     const nuevaHash = await bcrypt.hash(nueva, 10);
 
-    await db.query(
-      "UPDATE usuarios SET password = ? WHERE id = ?",
-      [nuevaHash, usuarioId]
-    );
+    const { error: updateError } = await db
+      .from('usuarios')
+      .update({ password: nuevaHash })
+      .eq('id', usuarioId);
+
+    if (updateError) throw updateError;
 
     res.json({ message: "Contraseña actualizada" });
 

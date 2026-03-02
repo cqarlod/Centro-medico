@@ -5,13 +5,13 @@ const path = require("path");
 
 
 const authController = require("../controllers/auth.controller");
+const db = require("../config/db");
 
 console.log("AUTH CONTROLLER:", authController);
 
 // POST /auth/login
 router.post("/login", authController.login);
 
-module.exports = router;
 const { isAuthenticated } = require("../middlewares/auth.middleware");
 
 router.post("/logout", (req, res) => {
@@ -41,13 +41,17 @@ router.post(
   async (req, res) => {
     const fotoPath = "/uploads/perfiles/" + req.file.filename;
 
-    await db.query(
-      "UPDATE usuarios SET foto = ? WHERE id = ?",
-      [fotoPath, req.session.usuario.id]
-    );
+    const { error: errorDB } = await db
+      .from('usuarios')
+      .update({ foto: fotoPath })
+      .eq('id', req.session.usuario.id);
+
+    if (errorDB) throw errorDB;
 
     req.session.usuario.foto = fotoPath;
 
     res.json({ message: "Foto actualizada", foto: fotoPath });
   }
 );
+
+module.exports = router;

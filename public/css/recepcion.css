@@ -572,3 +572,11 @@ body {
     padding: 20px;
   }
 }
+
+.btn-icon.warning {
+    background-color: #f39c12;
+    color: white;
+}
+.btn-icon.warning:hover {
+    background-color: #e67e22;
+}

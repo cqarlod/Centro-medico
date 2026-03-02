@@ -1,16 +1,27 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Recepcionista · MedPanel</title>
   <link rel="stylesheet" href="/css/recepcion.css" />
-  <!-- Font Awesome para iconos -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    /* Estilo extra para el nuevo botón de aviso */
+    .btn-icon.warning {
+      background-color: #f39c12;
+      color: white;
+    }
+
+    .btn-icon.warning:hover {
+      background-color: #e67e22;
+    }
+  </style>
 </head>
+
 <body>
 
-  <!-- NAVBAR -->
   <header class="navbar">
     <button id="menuBtn" class="menu-btn">
       <i class="fas fa-bars"></i>
@@ -25,7 +36,6 @@
     </div>
   </header>
 
-  <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <i class="fas fa-calendar-alt"></i>
@@ -51,10 +61,8 @@
     </ul>
   </aside>
 
-  <!-- CONTENIDO PRINCIPAL -->
   <main class="content">
 
-    <!-- SECCION CITAS -->
     <section id="dashboard" class="seccion activa">
       <div class="section-header">
         <h2><i class="fas fa-calendar-plus"></i> Agendar Nueva Cita</h2>
@@ -116,76 +124,24 @@
       </div>
 
       <div class="citas-grid" id="listaCitas">
-        <!-- Las citas se cargan dinámicamente -->
       </div>
     </section>
 
-    <!-- SECCION PACIENTES -->
     <section id="pacientes" class="seccion">
-      <div class="section-header">
-        <h2><i class="fas fa-user-plus"></i> Registrar Nuevo Paciente</h2>
-      </div>
-
-      <div class="card">
-        <form id="formPaciente" class="form-paciente">
-          <div class="form-row">
-            <div class="form-group">
-              <label for="nuevoNombre">
-                <i class="fas fa-user"></i> Nombre completo
-              </label>
-              <input type="text" id="nuevoNombre" placeholder="Ej. Juan Pérez" required />
-            </div>
-
-            <div class="form-group">
-              <label for="nuevoTelefono">
-                <i class="fas fa-phone"></i> Teléfono
-              </label>
-              <input type="text" id="nuevoTelefono" placeholder="Ej. 555-1234" />
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="nuevoCorreo">
-                <i class="fas fa-envelope"></i> Correo electrónico
-              </label>
-              <input type="email" id="nuevoCorreo" placeholder="ejemplo@correo.com" />
-            </div>
-
-            <div class="form-group">
-              <label for="nuevoNacimiento">
-                <i class="fas fa-birthday-cake"></i> Fecha de nacimiento
-              </label>
-              <input type="date" id="nuevoNacimiento" required />
-            </div>
-          </div>
-
-          <button type="submit" class="btn-primary">
-            <i class="fas fa-user-plus"></i> Registrar Paciente
-          </button>
-        </form>
-      </div>
-
-      <div class="section-header" style="margin-top: 40px;">
-        <h2><i class="fas fa-search"></i> Buscar Pacientes</h2>
-      </div>
-
-      <div class="search-box">
-        <i class="fas fa-search"></i>
-        <input type="text" id="buscarPaciente" placeholder="Buscar por nombre o teléfono...">
-      </div>
-
-      <div class="pacientes-list" id="listaPacientes">
-        <!-- Lista de pacientes cargados -->
-      </div>
     </section>
 
   </main>
 
-  <!-- Mensaje flotante para notificaciones -->
   <div id="toast" class="toast"></div>
 
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/realtime.js"></script>
+
   <script>
+    // Configuración inicial de Realtime
+    let miIdRecepcionista = null;
+    let miNombreRecepcionista = "Recepcionista";
+
     const sidebar = document.getElementById("sidebar");
     const menuBtn = document.getElementById("menuBtn");
 
@@ -194,29 +150,17 @@
       sidebar.classList.toggle("open");
     });
 
-    // Cerrar sidebar al hacer clic fuera
-    document.addEventListener("click", function (event) {
-      const isClickInsideSidebar = sidebar.contains(event.target);
-      const isClickOnMenuButton = menuBtn.contains(event.target);
-
-      if (!isClickInsideSidebar && !isClickOnMenuButton) {
-        sidebar.classList.remove("open");
-      }
-    });
-
     // Mostrar sección
     function mostrarSeccion(id) {
       document.querySelectorAll(".seccion").forEach(sec => {
         sec.classList.remove("activa");
       });
       document.getElementById(id).classList.add("activa");
-      
-      // Actualizar active en sidebar
+
       document.querySelectorAll(".sidebar li").forEach(li => {
         li.classList.remove("active");
       });
       event.currentTarget.classList.add("active");
-      
       sidebar.classList.remove("open");
     }
 
@@ -226,10 +170,10 @@
       toast.textContent = mensaje;
       toast.className = `toast ${tipo}`;
       toast.style.display = 'block';
-      
+
       setTimeout(() => {
         toast.style.display = 'none';
-      }, 3000);
+      }, 4000);
     }
 
     // Cerrar sesión
@@ -238,137 +182,68 @@
     }
 
     // ==================================
+    // FUNCIONES DE TIEMPO REAL
+    // ==================================
+
+    // 1. Notificar al doctor que el paciente llegó
+    function avisarLlegada(nombrePaciente, idDoctor) {
+      if (!miIdRecepcionista) {
+        mostrarToast('Error: No se ha cargado la sesión todavía', 'error');
+        return;
+      }
+      enviarAvisoAlDoctor(nombrePaciente, idDoctor, miIdRecepcionista);
+      mostrarToast(`Avisando al doctor sobre la llegada de ${nombrePaciente}...`, 'info');
+    }
+
+    // 2. Escuchar cuando el doctor autoriza el paso
+    function setupRecepcionSocket() {
+      socket.on(`recepcion-${miIdRecepcionista}`, (data) => {
+        mostrarToast(`¡AUTORIZADO! El paciente ${data.paciente} ya puede pasar.`, 'success');
+        // Sonido
+        new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play().catch(e => console.log('Audio error:', e));
+      });
+    }
+
+    // ==================================
     // FUNCIONES DE LA API
     // ==================================
 
-    // Cargar pacientes en el select
     async function cargarPacientes() {
       try {
         const res = await fetch("/api/recepcion/pacientes");
         const pacientes = await res.json();
-
         const select = document.getElementById("paciente");
         select.innerHTML = '<option value="">Selecciona un paciente</option>';
-
         pacientes.forEach(p => {
           const option = document.createElement("option");
           option.value = p.id;
           option.textContent = p.nombre;
           select.appendChild(option);
         });
-
-        // También cargar lista de pacientes
-        const lista = document.getElementById("listaPacientes");
-        if (lista) {
-          lista.innerHTML = pacientes.map(p => `
-            <div class="paciente-card">
-              <div class="paciente-info">
-                <strong>${p.nombre}</strong>
-                <span>📞 ${p.telefono || 'Sin teléfono'}</span>
-                <span>📧 ${p.correo || 'Sin correo'}</span>
-              </div>
-            </div>
-          `).join('');
-        }
-      } catch (error) {
-        console.error('Error cargando pacientes:', error);
-      }
+      } catch (error) { console.error('Error cargando pacientes:', error); }
     }
 
-    // Cargar doctores
     async function cargarDoctores() {
       try {
         const res = await fetch("/api/recepcion/doctores");
         const doctores = await res.json();
-
         const select = document.getElementById("doctor");
         select.innerHTML = '<option value="">Selecciona un doctor</option>';
-
         doctores.forEach(doc => {
           const option = document.createElement("option");
           option.value = doc.id;
           option.textContent = `${doc.nombre} - ${doc.especialidad}`;
           select.appendChild(option);
         });
-      } catch (error) {
-        console.error('Error cargando doctores:', error);
-      }
+      } catch (error) { console.error('Error cargando doctores:', error); }
     }
 
-    // Crear paciente
-    document.getElementById("formPaciente").addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const nombre = document.getElementById("nuevoNombre").value;
-      const telefono = document.getElementById("nuevoTelefono").value;
-      const correo = document.getElementById("nuevoCorreo").value;
-      const fecha_nacimiento = document.getElementById("nuevoNacimiento").value;
-
-      try {
-        const res = await fetch("/api/recepcion/pacientes", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ nombre, telefono, correo, fecha_nacimiento })
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-          mostrarToast('Paciente registrado correctamente', 'success');
-          document.getElementById("formPaciente").reset();
-          cargarPacientes();
-        } else {
-          mostrarToast(data.message || 'Error al registrar', 'error');
-        }
-      } catch (error) {
-        mostrarToast('Error de conexión', 'error');
-      }
-    });
-
-    // Crear cita
-    document.getElementById("formCita").addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const paciente_id = document.getElementById("paciente").value;
-      const doctor_id = document.getElementById("doctor").value;
-      const fecha = document.getElementById("fecha").value;
-      const hora = document.getElementById("hora").value;
-      const nota = document.getElementById("nota").value;
-
-      if (!paciente_id || !doctor_id) {
-        mostrarToast('Selecciona paciente y doctor', 'error');
-        return;
-      }
-
-      try {
-        const res = await fetch("/api/recepcion/citas", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ paciente_id, doctor_id, fecha, hora, nota })
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-          mostrarToast('Cita agendada correctamente', 'success');
-          document.getElementById("formCita").reset();
-          cargarCitasHoy();
-        } else {
-          mostrarToast(data.message || 'Error al agendar', 'error');
-        }
-      } catch (error) {
-        mostrarToast('Error de conexión', 'error');
-      }
-    });
-
-    // Cargar citas del día
     async function cargarCitasHoy() {
       try {
         const res = await fetch("/api/recepcion/citas-hoy");
         const citas = await res.json();
-
         const lista = document.getElementById("listaCitas");
-        
+
         if (citas.length === 0) {
           lista.innerHTML = '<div class="empty-state">No hay citas programadas para hoy</div>';
           return;
@@ -392,64 +267,97 @@
             <div class="cita-estado">
               <span class="estado-badge ${c.estado}">${c.estado}</span>
             </div>
-            ${c.estado === 'Programada' ? `
-              <div class="cita-acciones">
+            <div class="cita-acciones">
+              ${c.estado === 'Programada' ? `
+                <button onclick="avisarLlegada('${c.paciente}', ${c.doctor_id})" class="btn-icon warning" title="Notificar llegada al doctor">
+                  <i class="fas fa-bell"></i>
+                </button>
+
                 <button onclick="cambiarEstado(${c.id}, 'Atendida')" class="btn-icon success" title="Marcar como atendida">
                   <i class="fas fa-check"></i>
                 </button>
                 <button onclick="cambiarEstado(${c.id}, 'Cancelada')" class="btn-icon danger" title="Cancelar cita">
                   <i class="fas fa-times"></i>
                 </button>
-              </div>
-            ` : ''}
+              ` : ''}
+            </div>
           </div>
         `).join('');
-      } catch (error) {
-        console.error('Error cargando citas:', error);
-      }
+      } catch (error) { console.error('Error cargando citas:', error); }
     }
 
-    // Cambiar estado de cita
+    // Guardar nueva cita
+    document.getElementById("formCita").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const datos = {
+        paciente_id: document.getElementById("paciente").value,
+        doctor_id: document.getElementById("doctor").value,
+        fecha: document.getElementById("fecha").value,
+        hora: document.getElementById("hora").value,
+        nota: document.getElementById("nota").value
+      };
+
+      try {
+        const res = await fetch("/api/recepcion/citas", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(datos)
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          mostrarToast(data.message, 'success');
+          document.getElementById("formCita").reset();
+          cargarCitasHoy();
+        } else {
+          mostrarToast(data.message || 'Error al guardar cita', 'error');
+        }
+      } catch (error) {
+        mostrarToast('Error de conexión', 'error');
+      }
+    });
+
     async function cambiarEstado(id, nuevoEstado) {
       if (!confirm(`¿Seguro que deseas marcar como ${nuevoEstado}?`)) return;
-
       try {
         const res = await fetch(`/api/recepcion/citas/${id}/estado`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ estado: nuevoEstado })
         });
-
-        const data = await res.json();
-
         if (res.ok) {
           mostrarToast(`Cita ${nuevoEstado.toLowerCase()}`, 'success');
           cargarCitasHoy();
-        } else {
-          mostrarToast(data.message || 'Error al actualizar', 'error');
         }
+      } catch (error) { mostrarToast('Error de conexión', 'error'); }
+    }
+
+    async function cargarMiSesion() {
+      try {
+        const res = await fetch("/session/me");
+        if (!res.ok) throw new Error("No sesión");
+        const usuario = await res.json();
+
+        miIdRecepcionista = usuario.id;
+        miNombreRecepcionista = usuario.nombre;
+        document.getElementById("usuarioNombre").textContent = miNombreRecepcionista;
+
+        // Inicializar socket de la recepcionista ahora que sabemos su ID
+        setupRecepcionSocket();
       } catch (error) {
-        mostrarToast('Error de conexión', 'error');
+        console.error("Error obteniendo sesión", error);
       }
     }
 
-    // Buscar pacientes
-    document.getElementById('buscarPaciente')?.addEventListener('input', (e) => {
-      const termino = e.target.value.toLowerCase();
-      const cards = document.querySelectorAll('.paciente-card');
-      
-      cards.forEach(card => {
-        const texto = card.textContent.toLowerCase();
-        card.style.display = texto.includes(termino) ? 'flex' : 'none';
-      });
-    });
-
-    // Inicializar
     window.onload = () => {
+      cargarMiSesion();
       cargarPacientes();
       cargarDoctores();
       cargarCitasHoy();
     };
   </script>
 </body>
+
 </html>

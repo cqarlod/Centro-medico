@@ -1,10 +1,14 @@
 const express = require("express");
 const session = require("express-session");
 const path = require("path");
+const http = require("http"); // Agregado
+const { Server } = require("socket.io"); // Agregado
 
 require("dotenv").config();
 
 const app = express();
+const server = http.createServer(app); // Agregado
+const io = new Server(server); // Agregado
 
 // =====================
 // MIDDLEWARES GENERALES
@@ -21,6 +25,28 @@ app.use(
 );
 
 // =====================
+// LÓGICA DE TIEMPO REAL (SOCKET.IO)
+// =====================
+io.on('connection', (socket) => {
+  console.log('Usuario conectado al sistema de alertas:', socket.id);
+
+  // 1. Recepcionista notifica al doctor
+  socket.on('notificar-paciente', (data) => {
+    // 'data' contiene { paciente, doctorId, recepcionistaId }
+    console.log(`Notificando a Doctor ID: ${data.doctorId}`);
+    // Enviamos la alerta específicamente al canal de ese doctor
+    io.emit(`doctor-${data.doctorId}`, data);
+  });
+
+  // 2. Doctor autoriza el paso
+  socket.on('autorizar-paso', (data) => {
+    console.log(`Doctor autorizó a: ${data.paciente}`);
+    // Regresamos la confirmación a la recepcionista
+    io.emit(`recepcion-${data.recepcionistaId}`, data);
+  });
+});
+
+// =====================
 // ARCHIVOS ESTÁTICOS
 // =====================
 app.use(express.static("public"));
@@ -28,6 +54,10 @@ app.use(express.static("public"));
 // =====================
 // REDIRECCIONES - SOLO ESTO ES NUEVO
 // =====================
+app.get("/", (req, res) => {
+  res.redirect("/login.html");
+});
+
 app.get("/recepcionista/dashboard.html", (req, res) => {
   res.redirect("/recepcionista/dashboard");
 });
@@ -52,8 +82,6 @@ const {
 
 const recepcionRoutes = require("./routes/recepcion.routes");
 app.use("/api/recepcion", recepcionRoutes);
-
-app.use("/session", require("./routes/session.routes"));
 
 
 // =====================
@@ -114,8 +142,8 @@ app.get("/test", (req, res) => {
 });
 
 // =====================
-// SERVIDOR
+// SERVIDOR (Cambiamos app.listen por server.listen)
 // =====================
-app.listen(3000, () => {
+server.listen(3000, () => {
   console.log("Servidor corriendo en http://localhost:3000");
 });

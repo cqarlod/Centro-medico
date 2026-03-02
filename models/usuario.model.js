@@ -1,22 +1,27 @@
 const db = require("../config/db");
 
 const Usuario = {
-  findByEmail: (correo, callback) => {
-    const sql = "SELECT * FROM usuarios WHERE correo = ?";
-    db.query(sql, [correo], callback);
+  findByEmail: async (correo) => {
+    const { data: rows, error } = await db
+      .from('usuarios')
+      .select('*')
+      .eq('correo', correo);
+    if (error) throw error;
+    return rows;
   },
 
-  create: (data, callback) => {
-    const sql = `
-      INSERT INTO usuarios (nombre, correo, password, rol)
-      VALUES (?, ?, ?, ?)
-    `;
-    db.query(sql, [
-      data.nombre,
-      data.correo,
-      data.password,
-      data.rol
-    ], callback);
+  create: async (data) => {
+    const { data: result, error } = await db
+      .from('usuarios')
+      .insert([{
+        nombre: data.nombre,
+        correo: data.correo,
+        password: data.password,
+        rol: data.rol
+      }])
+      .select();
+    if (error) throw error;
+    return result;
   }
 };
 
