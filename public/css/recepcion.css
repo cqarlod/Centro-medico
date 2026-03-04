@@ -572,3 +572,35 @@ body {
     padding: 20px;
   }
 }
+
+/* Ajustes para FullCalendar */
+.fc {
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+}
+
+.fc-toolbar-title {
+  color: #0a3b5c !important;
+  font-size: 1.5rem !important;
+}
+
+.fc-button-primary {
+  background: #0a3b5c !important;
+  border-color: #0a3b5c !important;
+}
+
+.fc-button-primary:hover {
+  background: #0f4a6f !important;
+}
+
+.fc-day-today {
+  background: #e3f2fd !important;
+}
+
+.fc-event {
+  cursor: pointer;
+  border-radius: 6px !important;
+  padding: 2px 4px !important;
+}
