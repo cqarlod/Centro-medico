@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doctor · MedPanel</title>
+  
+  <!-- FullCalendar -->
+  <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+  <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+  
+  <!-- Tus CSS -->
+  <link rel="stylesheet" href="/css/doctor.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <header class="navbar">
+    <button id="menuBtn" class="menu-btn">
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="navbar-brand">
+      <i class="fas fa-hospital"></i>
+      <h1>MedPanel · Doctor</h1>
+    </div>
+    <div class="navbar-user">
+      <i class="fas fa-user-md"></i>
+      <span id="usuarioNombre">Doctor</span>
+    </div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <i class="fas fa-calendar-alt"></i>
+      <span>Menu</span>
+    </div>
+    <ul>
+      <li onclick="mostrarSeccion('dashboard')" class="active">
+        <i class="fas fa-calendar-alt"></i>
+        <span>Mi Calendario</span>
+      </li>
+      <li onclick="mostrarSeccion('citas')">
+        <i class="fas fa-list"></i>
+        <span>Lista de Citas</span>
+      </li>
+      <li onclick="mostrarSeccion('pacientes')">
+        <i class="fas fa-users"></i>
+        <span>Mis Pacientes</span>
+      </li>
+      <li onclick="window.location.href='/perfil'">
+        <i class="fas fa-user"></i>
+        <span>Mi Perfil</span>
+      </li>
+      <li onclick="cerrarSesion()" class="logout">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Cerrar sesion</span>
+      </li>
+    </ul>
+  </aside>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="content">
+
+    <!-- SECCION CALENDARIO -->
+    <section id="dashboard" class="seccion activa">
+      <div class="section-header">
+        <h2><i class="fas fa-calendar-alt"></i> Mi Calendario</h2>
+      </div>
+
+      <!-- Estadisticas rapidas -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon blue">
+            <i class="fas fa-calendar-day"></i>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Citas hoy</span>
+            <span class="stat-value" id="totalHoy">0</span>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon green">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Atendidas</span>
+            <span class="stat-value" id="atendidasHoy">0</span>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon yellow">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Pendientes</span>
+            <span class="stat-value" id="pendientesHoy">0</span>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon orange">
+            <i class="fas fa-calendar-week"></i>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Proximas</span>
+            <span class="stat-value" id="proximasCitas">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Calendario -->
+      <div class="card">
+        <div id="calendario-doctor"></div>
+      </div>
+    </section>
+
+    <!-- SECCION LISTA DE CITAS -->
+    <section id="citas" class="seccion">
+      <div class="section-header">
+        <h2><i class="fas fa-list"></i> Lista de Citas</h2>
+      </div>
+
+      <!-- Filtros -->
+      <div class="card">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="filtroFecha">Fecha</label>
+            <input type="date" id="filtroFecha" class="form-control">
+          </div>
+          
+          <div class="form-group">
+            <label for="filtroEstado">Estado</label>
+            <select id="filtroEstado" class="form-control">
+              <option value="todos">Todos</option>
+              <option value="Programada">Programada</option>
+              <option value="Atendida">Atendida</option>
+              <option value="Cancelada">Cancelada</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <button onclick="cargarListaCitas()" class="btn-primary">
+              <i class="fas fa-search"></i> Filtrar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla de citas -->
+      <div class="card">
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Paciente</th>
+                <th>Telefono</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tablaCitas">
+              <tr>
+                <td colspan="6" class="text-center">Cargando...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCION PACIENTES -->
+    <section id="pacientes" class="seccion">
+      <div class="section-header">
+        <h2><i class="fas fa-users"></i> Mis Pacientes</h2>
+      </div>
+
+      <div class="card">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="buscarPaciente" placeholder="Buscar paciente...">
+        </div>
+
+        <div class="pacientes-grid" id="listaPacientes">
+          <!-- Pacientes cargados dinamicamente -->
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Modal para reprogramar cita -->
+  <div id="modalReprogramar" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Reprogramar Cita</h3>
+        <span class="close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="formReprogramar">
+          <input type="hidden" id="reprogramarCitaId">
+          
+          <div class="form-group">
+            <label>Nueva Fecha</label>
+            <input type="date" id="nuevaFecha" class="form-control" required>
+          </div>
+          
+          <div class="form-group">
+            <label>Nueva Hora</label>
+            <input type="time" id="nuevaHora" class="form-control" required>
+          </div>
+          
+          <button type="submit" class="btn-primary">Actualizar Cita</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para notas -->
+  <div id="modalNota" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Nota de la Cita</h3>
+        <span class="close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="formNota">
+          <input type="hidden" id="notaCitaId">
+          
+          <div class="form-group">
+            <label>Nota</label>
+            <textarea id="notaTexto" class="form-control" rows="5"></textarea>
+          </div>
+          
+          <button type="submit" class="btn-primary">Guardar Nota</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <!-- SOLO ESTE SCRIPT - EL EXTERNO -->
+  <script src="/js/doctor.js"></script>
+  
+  <!-- ELIMINADO TODO EL CODIGO JAVASCRIPT QUE ESTABA AQUI -->
+  
+</body>
+</html>

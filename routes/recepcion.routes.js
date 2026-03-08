@@ -9,16 +9,20 @@ router.use(hasRole("recepcionista"));
 
 // Obtener doctores
 router.get("/doctores", async (req, res) => {
-  const [rows] = await db.query(`
-    SELECT 
-      d.id,
-      u.nombre,
-      d.especialidad
-    FROM doctores d
-    JOIN usuarios u ON d.usuario_id = u.id
-  `);
-
-  res.json(rows);
+  try {
+    const result = await db.query(`
+      SELECT 
+        d.id,
+        u.nombre,
+        d.especialidad
+      FROM doctores d
+      JOIN usuarios u ON d.usuario_id = u.id
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error en /doctores:", error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Crear cita
@@ -26,33 +30,29 @@ router.post("/citas", async (req, res) => {
   try {
     const { paciente_id, doctor_id, fecha, hora, nota } = req.body;
 
-    // Validar datos requeridos
     if (!paciente_id || !doctor_id || !fecha || !hora) {
       return res.status(400).json({ 
         message: "Faltan datos requeridos (paciente, doctor, fecha, hora)" 
       });
     }
 
-    // Verificar si ya existe cita en ese horario con ese doctor
-    const [existe] = await db.query(
-      "SELECT * FROM citas WHERE doctor_id = ? AND fecha = ? AND hora = ?",
+    const existe = await db.query(
+      "SELECT * FROM citas WHERE doctor_id = $1 AND fecha = $2 AND hora = $3",
       [doctor_id, fecha, hora]
     );
 
-    if (existe.length > 0) {
+    if (existe.rows.length > 0) {
       return res.status(400).json({
         message: "El doctor ya tiene una cita en ese horario"
       });
     }
 
-    // Insertar la cita
-    const [result] = await db.query(
-      "INSERT INTO citas (paciente_id, doctor_id, fecha, hora, nota) VALUES (?, ?, ?, ?, ?)",
+    const result = await db.query(
+      "INSERT INTO citas (paciente_id, doctor_id, fecha, hora, nota) VALUES ($1, $2, $3, $4, $5) RETURNING id",
       [paciente_id, doctor_id, fecha, hora, nota || null]
     );
 
-    // Obtener la cita creada con nombres
-    const [[citaNueva]] = await db.query(
+    const citaNuevaResult = await db.query(
       `SELECT c.id, c.hora, c.estado, 
           p.nombre AS paciente, 
           u.nombre AS doctor
@@ -60,9 +60,11 @@ router.post("/citas", async (req, res) => {
       JOIN pacientes p ON c.paciente_id = p.id
       JOIN doctores d ON c.doctor_id = d.id
       JOIN usuarios u ON d.usuario_id = u.id
-      WHERE c.id = ?`,
-      [result.insertId]
+      WHERE c.id = $1`,
+      [result.rows[0].id]
     );
+
+    const citaNueva = citaNuevaResult.rows[0];
 
     res.status(201).json({
       message: "Cita creada correctamente",
@@ -78,11 +80,10 @@ router.post("/citas", async (req, res) => {
   }
 });
 
-
 // Ver citas del día
 router.get("/citas-hoy", async (req, res) => {
   try {
-    const [rows] = await db.query(`
+    const result = await db.query(`
       SELECT 
         c.*, 
         p.nombre AS paciente, 
@@ -91,11 +92,11 @@ router.get("/citas-hoy", async (req, res) => {
       JOIN pacientes p ON c.paciente_id = p.id
       JOIN doctores d ON c.doctor_id = d.id
       JOIN usuarios u ON d.usuario_id = u.id
-      WHERE c.fecha = CURDATE()
+      WHERE c.fecha = CURRENT_DATE
       ORDER BY c.hora ASC
     `);
 
-    res.json(rows);
+    res.json(result.rows);
   } catch (error) {
     console.error("Error en /citas-hoy:", error);
     res.status(500).json({ error: error.message });
@@ -109,24 +110,25 @@ router.put("/citas/:id/estado", async (req, res) => {
     const { estado } = req.body;
 
     await db.query(
-      "UPDATE citas SET estado = ? WHERE id = ?",
+      "UPDATE citas SET estado = $1 WHERE id = $2",
       [estado, id]
     );
 
     res.json({ message: "Estado actualizado correctamente" });
 
   } catch (error) {
+    console.error("Error al actualizar estado:", error);
     res.status(500).json({ error: error.message });
   }
 });
 
-
 // Obtener pacientes
 router.get("/pacientes", async (req, res) => {
   try {
-    const [rows] = await db.query("SELECT * FROM pacientes");
-    res.json(rows);
+    const result = await db.query("SELECT * FROM pacientes ORDER BY nombre ASC");
+    res.json(result.rows);
   } catch (error) {
+    console.error("Error en /pacientes:", error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -136,17 +138,18 @@ router.post("/pacientes", async (req, res) => {
   try {
     const { nombre, telefono, correo, fecha_nacimiento } = req.body;
 
-    const [result] = await db.query(
-      "INSERT INTO pacientes (nombre, telefono, correo, fecha_nacimiento) VALUES (?, ?, ?, ?)",
-      [nombre, telefono, correo, fecha_nacimiento]
+    const result = await db.query(
+      "INSERT INTO pacientes (nombre, telefono, correo, fecha_nacimiento) VALUES ($1, $2, $3, $4) RETURNING id",
+      [nombre, telefono || null, correo || null, fecha_nacimiento]
     );
 
     res.json({
       message: "Paciente creado correctamente",
-      id: result.insertId
+      id: result.rows[0].id
     });
 
   } catch (error) {
+    console.error("Error al crear paciente:", error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -154,7 +157,7 @@ router.post("/pacientes", async (req, res) => {
 // Obtener todos los doctores para el filtro del calendario
 router.get("/doctores-lista", async (req, res) => {
   try {
-    const [rows] = await db.query(`
+    const result = await db.query(`
       SELECT 
         d.id,
         u.nombre,
@@ -163,7 +166,7 @@ router.get("/doctores-lista", async (req, res) => {
       JOIN usuarios u ON d.usuario_id = u.id
       ORDER BY u.nombre ASC
     `);
-    res.json(rows);
+    res.json(result.rows);
   } catch (error) {
     console.error("Error en /doctores-lista:", error);
     res.status(500).json({ error: error.message });
@@ -194,29 +197,33 @@ router.get("/citas-calendario", async (req, res) => {
     `;
     
     const params = [];
+    let paramIndex = 1;
     
     if (doctor_id && doctor_id !== 'todos') {
-      query += " AND d.id = ?";
+      query += ` AND d.id = $${paramIndex}`;
       params.push(doctor_id);
+      paramIndex++;
     }
     
     if (fecha_inicio) {
-      query += " AND c.fecha >= ?";
+      query += ` AND c.fecha >= $${paramIndex}`;
       params.push(fecha_inicio);
+      paramIndex++;
     }
     
     if (fecha_fin) {
-      query += " AND c.fecha <= ?";
+      query += ` AND c.fecha <= $${paramIndex}`;
       params.push(fecha_fin);
+      paramIndex++;
     }
     
     query += " ORDER BY c.fecha ASC, c.hora ASC";
     
-    const [rows] = await db.query(query, params);
-    res.json(rows);
+    const result = await db.query(query, params);
+    res.json(result.rows);
     
   } catch (error) {
-    console.error("❌ Error en /citas-calendario:", error);
+    console.error("Error en /citas-calendario:", error);
     res.status(500).json({ error: error.message });
   }
 });

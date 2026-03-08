@@ -11,11 +11,11 @@
 <body>
   <div class="perfil-container">
     
-    <!-- Botón de regreso -->
+    <!-- Botón de regreso - AHORA DINÁMICO -->
     <div class="back-button">
-      <button onclick="window.location.href='/recepcionista/dashboard'" class="btn-back">
+      <button id="btnVolver" class="btn-back">
         <i class="fas fa-arrow-left"></i>
-        Volver al Panel
+        <span id="btnTexto">Volver al Panel</span>
       </button>
     </div>
     
@@ -50,18 +50,18 @@
       <div class="info-grid">
         <div class="info-item">
           <span class="info-label">Nombre completo</span>
-          <span class="info-value" id="nombre">Juan Pérez</span>
+          <span class="info-value" id="nombre">Cargando...</span>
         </div>
         
         <div class="info-item">
           <span class="info-label">Correo electrónico</span>
-          <span class="info-value" id="correo">juan.perez@medpanel.com</span>
+          <span class="info-value" id="correo">Cargando...</span>
         </div>
         
         <div class="info-item">
           <span class="info-label">Rol</span>
           <span class="info-value" id="rol">
-            <span class="rol-badge">Recepcionista</span>
+            <span class="rol-badge" id="rolBadge">Cargando...</span>
           </span>
         </div>
       </div>
@@ -106,6 +106,149 @@
     <div id="mensaje" class="mensaje"></div>
   </div>
 
-  <script src="js/perfil.js"></script>
+  <script>
+    // ==================================
+    // FUNCIONES PARA EL PERFIL
+    // ==================================
+    
+    async function cargarPerfil() {
+      try {
+        // Obtener datos de la sesión
+        const sessionRes = await fetch("/check-session");
+        const sessionData = await sessionRes.json();
+        
+        if (!sessionData.autenticado) {
+          window.location.href = "/auth/login";
+          return;
+        }
+        
+        const usuario = sessionData.usuario;
+        
+        // Actualizar datos en la página
+        document.getElementById("nombre").textContent = usuario.nombre || "No especificado";
+        document.getElementById("correo").textContent = usuario.correo || "No especificado";
+        
+        const rolTexto = usuario.rol.charAt(0).toUpperCase() + usuario.rol.slice(1);
+        document.getElementById("rolBadge").textContent = rolTexto;
+        
+        // Configurar botón de regreso según el rol
+        const btnVolver = document.getElementById("btnVolver");
+        switch(usuario.rol) {
+          case 'admin':
+            btnVolver.onclick = () => window.location.href = '/admin/dashboard';
+            break;
+          case 'doctor':
+            btnVolver.onclick = () => window.location.href = '/doctor/dashboard';
+            break;
+          case 'recepcionista':
+            btnVolver.onclick = () => window.location.href = '/recepcionista/dashboard';
+            break;
+          default:
+            btnVolver.onclick = () => window.location.href = '/auth/login';
+        }
+        
+        // Cargar foto si existe
+        if (usuario.foto) {
+          document.getElementById("fotoPerfil").src = usuario.foto;
+        }
+        
+      } catch (error) {
+        console.error("Error cargando perfil:", error);
+        mostrarMensaje("Error al cargar el perfil", "error");
+      }
+    }
+
+    // Manejar cambio de foto
+    document.getElementById("fotoForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData();
+      const fotoFile = document.getElementById("inputFoto").files[0];
+      
+      if (!fotoFile) {
+        mostrarMensaje("Selecciona una foto", "error");
+        return;
+      }
+
+      formData.append("foto", fotoFile);
+
+      try {
+        const res = await fetch("/api/usuarios/foto", {
+          method: "POST",
+          body: formData
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          document.getElementById("fotoPerfil").src = data.foto + "?t=" + Date.now();
+          mostrarMensaje("Foto actualizada", "success");
+        } else {
+          mostrarMensaje(data.message, "error");
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        mostrarMensaje("Error de conexión", "error");
+      }
+    });
+
+    // Manejar cambio de contraseña
+    document.getElementById("passwordForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const actual = document.getElementById("actual").value;
+      const nueva = document.getElementById("nueva").value;
+      const confirmar = document.getElementById("confirmar").value;
+
+      if (nueva !== confirmar) {
+        mostrarMensaje("Las contraseñas no coinciden", "error");
+        return;
+      }
+
+      if (nueva.length < 6) {
+        mostrarMensaje("La contraseña debe tener al menos 6 caracteres", "error");
+        return;
+      }
+
+      try {
+        const res = await fetch("/auth/cambiar-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ actual, nueva })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          mostrarMensaje("Contraseña actualizada", "success");
+          document.getElementById("passwordForm").reset();
+        } else {
+          mostrarMensaje(data.message, "error");
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        mostrarMensaje("Error de conexión", "error");
+      }
+    });
+
+    // Mostrar mensajes
+    function mostrarMensaje(texto, tipo) {
+      const mensaje = document.getElementById("mensaje");
+      mensaje.textContent = texto;
+      mensaje.className = `mensaje ${tipo}`;
+      
+      setTimeout(() => {
+        mensaje.className = "mensaje";
+      }, 3000);
+    }
+
+    // Cerrar sesión
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      window.location.href = "/session/logout";
+    });
+
+    // Inicializar
+    cargarPerfil();
+  </script>
 </body>
 </html>
