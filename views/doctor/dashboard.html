@@ -243,6 +243,51 @@
     </div>
   </div>
 
+  <!-- ========== NUEVO MODAL PARA HISTORIAL DEL PACIENTE ========== -->
+  <div id="modalHistorial" class="modal">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h3><i class="fas fa-notes-medical"></i> Historial del Paciente</h3>
+        <span class="close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div id="historialContent">
+          <!-- Datos del paciente -->
+          <div class="paciente-info-header" id="infoPaciente">
+            <h4 id="pacienteNombre">Cargando...</h4>
+            <p><i class="fas fa-phone"></i> <span id="pacienteTelefono">-</span></p>
+            <p><i class="fas fa-envelope"></i> <span id="pacienteCorreo">-</span></p>
+            <p><i class="fas fa-birthday-cake"></i> <span id="pacienteNacimiento">-</span></p>
+          </div>
+          
+          <hr>
+          
+          <h4>Historial de Citas</h4>
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Hora</th>
+                  <th>Estado</th>
+                  <th>Nota</th>
+                </tr>
+              </thead>
+              <tbody id="historialCitas">
+                <tr>
+                  <td colspan="4" class="text-center">Cargando historial...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" onclick="cerrarHistorial()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="toast"></div>
 
   <!-- SOLO ESTE SCRIPT - EL EXTERNO -->

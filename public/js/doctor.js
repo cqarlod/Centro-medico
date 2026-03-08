@@ -5,6 +5,7 @@ const sidebar = document.getElementById("sidebar");
 const menuBtn = document.getElementById("menuBtn");
 let calendar;
 let doctorData = {};
+let pacienteActual = null; // Para el historial
 
 // Toggle sidebar
 menuBtn.addEventListener("click", () => {
@@ -214,17 +215,17 @@ async function cargarEventosCalendarioDoctor(fetchInfo, successCallback, failure
         console.log(`Hora formateada: ${horaStr}`);
       }
       
-      // COLORES BRILLANTES PARA DEPURACIÓN
-        let color;
-        if (c.estado === 'Programada') {
-            color = '#0a3b5c'; 
-        } else if (c.estado === 'Atendida') {
-            color = '#28a745'; 
-        } else if (c.estado === 'Cancelada') {
-            color = '#dc3545'; 
-        } else {
-            color = '#0a3b5c'; 
-        }
+      // COLORES NORMALES
+      let color;
+      if (c.estado === 'Programada') {
+        color = '#0a3b5c'; 
+      } else if (c.estado === 'Atendida') {
+        color = '#28a745'; 
+      } else if (c.estado === 'Cancelada') {
+        color = '#dc3545'; 
+      } else {
+        color = '#0a3b5c'; 
+      }
       
       console.log(`Color asignado: ${color}`);
       
@@ -432,7 +433,77 @@ document.getElementById("formNota").addEventListener("submit", async (e) => {
   }
 });
 
-// Cerrar modales
+// =============================================
+// FUNCIONES PARA EL HISTORIAL DEL PACIENTE
+// =============================================
+
+// Abrir historial del paciente
+window.verHistorial = async function(pacienteId, pacienteNombre) {
+  try {
+    console.log("Cargando historial del paciente:", pacienteId);
+    
+    // Mostrar modal
+    document.getElementById("modalHistorial").style.display = "block";
+    document.getElementById("historialCitas").innerHTML = '<tr><td colspan="4" class="text-center">Cargando historial...</td></tr>';
+    
+    // Limpiar datos anteriores
+    document.getElementById("pacienteNombre").textContent = "Cargando...";
+    document.getElementById("pacienteTelefono").textContent = "-";
+    document.getElementById("pacienteCorreo").textContent = "-";
+    document.getElementById("pacienteNacimiento").textContent = "-";
+    
+    // Hacer fetch al historial
+    const res = await fetch(`/api/doctor/pacientes/${pacienteId}/historial`);
+    
+    if (!res.ok) {
+      throw new Error("Error al cargar historial");
+    }
+    
+    const data = await res.json();
+    console.log("Historial recibido:", data);
+    
+    // Mostrar datos del paciente
+    document.getElementById("pacienteNombre").textContent = data.paciente.nombre;
+    document.getElementById("pacienteTelefono").textContent = data.paciente.telefono || "No registrado";
+    document.getElementById("pacienteCorreo").textContent = data.paciente.correo || "No registrado";
+    
+    if (data.paciente.fecha_nacimiento) {
+      const fecha = new Date(data.paciente.fecha_nacimiento);
+      document.getElementById("pacienteNacimiento").textContent = fecha.toLocaleDateString();
+    } else {
+      document.getElementById("pacienteNacimiento").textContent = "No registrado";
+    }
+    
+    // Mostrar historial de citas
+    if (data.citas.length === 0) {
+      document.getElementById("historialCitas").innerHTML = `
+        <tr>
+          <td colspan="4" class="text-center">No hay citas previas con este paciente</td>
+        </tr>
+      `;
+    } else {
+      document.getElementById("historialCitas").innerHTML = data.citas.map(c => `
+        <tr>
+          <td>${new Date(c.fecha).toLocaleDateString()}</td>
+          <td>${c.hora.substring(0,5)}</td>
+          <td><span class="badge ${c.estado}">${c.estado}</span></td>
+          <td>${c.nota || '-'}</td>
+        </tr>
+      `).join('');
+    }
+    
+  } catch (error) {
+    console.error("Error cargando historial:", error);
+    mostrarToast("Error al cargar historial", "error");
+  }
+};
+
+// Cerrar historial
+window.cerrarHistorial = function() {
+  document.getElementById("modalHistorial").style.display = "none";
+};
+
+// Cerrar modales (incluyendo el nuevo)
 document.querySelectorAll(".close").forEach(btn => {
   btn.addEventListener("click", function() {
     this.closest(".modal").style.display = "none";
@@ -445,7 +516,7 @@ window.addEventListener("click", (e) => {
   }
 });
 
-// Cargar pacientes
+// Cargar pacientes (MODIFICADO para incluir botón de historial)
 async function cargarPacientes() {
   try {
     const res = await fetch("/api/doctor/citas");
@@ -474,6 +545,9 @@ async function cargarPacientes() {
           <strong>${p.paciente}</strong>
           <span><i class="fas fa-phone"></i> ${p.paciente_telefono || 'No registrado'}</span>
         </div>
+        <button onclick="verHistorial(${p.paciente_id}, '${p.paciente}')" class="btn-icon blue small" title="Ver historial">
+          <i class="fas fa-notes-medical"></i>
+        </button>
       </div>
     `).join('');
     

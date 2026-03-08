@@ -263,4 +263,67 @@ router.get("/estadisticas", async (req, res) => {
   }
 });
 
+// Obtener historial de un paciente específico
+router.get("/pacientes/:pacienteId/historial", async (req, res) => {
+  try {
+    const usuarioId = req.session.usuario.id;
+    const { pacienteId } = req.params;
+    
+    // Verificar que el doctor existe
+    const doctorResult = await db.query(
+      "SELECT id FROM doctores WHERE usuario_id = $1",
+      [usuarioId]
+    );
+    
+    if (doctorResult.rows.length === 0) {
+      return res.status(404).json({ message: "Doctor no encontrado" });
+    }
+    
+    const doctorId = doctorResult.rows[0].id;
+    
+    // Obtener todas las citas del paciente con este doctor
+    const citasResult = await db.query(`
+      SELECT 
+        c.id,
+        c.fecha,
+        c.hora,
+        c.estado,
+        c.nota,
+        p.nombre as paciente,
+        p.telefono,
+        p.correo,
+        p.fecha_nacimiento
+      FROM citas c
+      JOIN pacientes p ON c.paciente_id = p.id
+      WHERE c.paciente_id = $1 AND c.doctor_id = $2
+      ORDER BY c.fecha DESC, c.hora DESC
+    `, [pacienteId, doctorId]);
+    
+    // Obtener datos del paciente
+    const pacienteResult = await db.query(`
+      SELECT 
+        id,
+        nombre,
+        telefono,
+        correo,
+        fecha_nacimiento
+      FROM pacientes
+      WHERE id = $1
+    `, [pacienteId]);
+    
+    if (pacienteResult.rows.length === 0) {
+      return res.status(404).json({ message: "Paciente no encontrado" });
+    }
+    
+    res.json({
+      paciente: pacienteResult.rows[0],
+      citas: citasResult.rows
+    });
+    
+  } catch (error) {
+    console.error("Error en /historial:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

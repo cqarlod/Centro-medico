@@ -737,3 +737,38 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* Modal grande para historial */
+.modal-lg {
+  max-width: 800px !important;
+}
+
+.paciente-info-header {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.paciente-info-header h4 {
+  color: #0a3b5c;
+  margin-bottom: 10px;
+  font-size: 18px;
+}
+
+.paciente-info-header p {
+  margin: 5px 0;
+  color: #1e2a3a;
+}
+
+.paciente-info-header i {
+  width: 20px;
+  color: #0a3b5c;
+  margin-right: 8px;
+}
+
+.modal-footer {
+  padding: 20px 24px;
+  border-top: 1px solid #e1e5ea;
+  text-align: right;
+}
