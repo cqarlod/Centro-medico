@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin · MedPanel</title>
+  
+  <!-- FullCalendar -->
+  <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+  <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+  
+  <!-- Tus CSS -->
+  <link rel="stylesheet" href="/css/admin.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <!-- Chart.js para gráficos -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <header class="navbar">
+    <button id="menuBtn" class="menu-btn">
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="navbar-brand">
+      <i class="fas fa-hospital"></i>
+      <h1>MedPanel · Administrador</h1>
+    </div>
+    <div class="navbar-user">
+      <i class="fas fa-user-cog"></i>
+      <span id="usuarioNombre">Admin</span>
+    </div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <i class="fas fa-calendar-alt"></i>
+      <span>Menu</span>
+    </div>
+    <ul>
+      <li onclick="mostrarSeccion('dashboard')" class="active">
+        <i class="fas fa-tachometer-alt"></i>
+        <span>Dashboard</span>
+      </li>
+      <li onclick="mostrarSeccion('usuarios')">
+        <i class="fas fa-users-cog"></i>
+        <span>Gestionar Usuarios</span>
+      </li>
+      <li onclick="mostrarSeccion('citas')">
+        <i class="fas fa-calendar-check"></i>
+        <span>Todas las Citas</span>
+      </li>
+      <li onclick="mostrarSeccion('reportes')">
+        <i class="fas fa-chart-bar"></i>
+        <span>Reportes</span>
+      </li>
+      <li onclick="window.location.href='/perfil'">
+        <i class="fas fa-user"></i>
+        <span>Mi Perfil</span>
+      </li>
+      <li onclick="cerrarSesion()" class="logout">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Cerrar sesion</span>
+      </li>
+    </ul>
+  </aside>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="content">
+
+    <!-- SECCION DASHBOARD -->
+    <section id="dashboard" class="seccion activa">
+      <div class="section-header">
+        <h2><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
+      </div>
+
+      <!-- Estadisticas -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon blue">
+            <i class="fas fa-users"></i>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Total Usuarios</span>
+            <span class="stat-value" id="totalUsuarios">0</span>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon green">
+            <i class="fas fa-user-md"></i>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Doctores</span>
+            <span class="stat-value" id="totalDoctores">0</span>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon yellow">
+            <i class="fas fa-user-tie"></i>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Recepcionistas</span>
+            <span class="stat-value" id="totalRecepcionistas">0</span>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon orange">
+            <i class="fas fa-calendar-check"></i>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Citas Hoy</span>
+            <span class="stat-value" id="citasHoy">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Graficos simples -->
+      <div class="card" style="max-width: 250px; margin: 0 auto;">
+        <h3>Distribución de Usuarios</h3>
+        <canvas id="graficoUsuarios" width="250" height="250"></canvas>
+      </div>
+    </section>
+
+    <!-- SECCION GESTIONAR USUARIOS -->
+    <section id="usuarios" class="seccion">
+      <div class="section-header">
+        <h2><i class="fas fa-users-cog"></i> Gestionar Usuarios</h2>
+      </div>
+
+      <!-- Boton para nuevo usuario -->
+      <div class="card">
+        <button class="btn-primary" onclick="abrirModalUsuario()">
+          <i class="fas fa-user-plus"></i> Nuevo Usuario
+        </button>
+      </div>
+
+      <!-- Tabla de usuarios -->
+      <div class="card">
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Correo</th>
+                <th>Rol</th>
+                <th>Especialidad</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tablaUsuarios">
+              <tr>
+                <td colspan="6" class="text-center">Cargando usuarios...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCION TODAS LAS CITAS -->
+    <section id="citas" class="seccion">
+      <div class="section-header">
+        <h2><i class="fas fa-calendar-check"></i> Todas las Citas</h2>
+      </div>
+
+      <!-- Filtros -->
+      <div class="card">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="filtroFechaAdmin">Fecha</label>
+            <input type="date" id="filtroFechaAdmin" class="form-control">
+          </div>
+          
+          <div class="form-group">
+            <label for="filtroEstadoAdmin">Estado</label>
+            <select id="filtroEstadoAdmin" class="form-control">
+              <option value="todos">Todos</option>
+              <option value="Programada">Programada</option>
+              <option value="Atendida">Atendida</option>
+              <option value="Cancelada">Cancelada</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <button onclick="cargarTodasLasCitas()" class="btn-primary">
+              <i class="fas fa-search"></i> Filtrar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla de citas -->
+      <div class="card">
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Paciente</th>
+                <th>Doctor</th>
+                <th>Estado</th>
+                <th>Nota</th>
+              </tr>
+            </thead>
+            <tbody id="tablaTodasCitas">
+              <tr>
+                <td colspan="6" class="text-center">Cargando citas...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCION REPORTES -->
+    <section id="reportes" class="seccion">
+      <div class="section-header">
+        <h2><i class="fas fa-chart-bar"></i> Reportes</h2>
+      </div>
+
+      <div class="card">
+        <h3>Próximamente...</h3>
+        <p>Estadísticas detalladas y reportes personalizados</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL PARA USUARIOS -->
+  <div id="modalUsuario" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalUsuarioTitulo">Nuevo Usuario</h3>
+        <span class="close" onclick="cerrarModalUsuario()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="formUsuario">
+          <input type="hidden" id="usuarioId">
+          
+          <div class="form-group">
+            <label>Nombre completo</label>
+            <input type="text" id="usuarioNombre" class="form-control" required>
+          </div>
+          
+          <div class="form-group">
+            <label>Correo electrónico</label>
+            <input type="email" id="usuarioCorreo" class="form-control" required>
+          </div>
+          
+          <div class="form-group" id="passwordGroup">
+            <label>Contraseña</label>
+            <input type="password" id="usuarioPassword" class="form-control">
+            <small class="text-muted">Dejar en blanco para mantener la actual</small>
+          </div>
+          
+          <div class="form-group">
+            <label>Rol</label>
+            <select id="usuarioRol" class="form-control" required onchange="toggleEspecialidad()">
+              <option value="">Seleccione un rol</option>
+              <option value="admin">Administrador</option>
+              <option value="doctor">Doctor</option>
+              <option value="recepcionista">Recepcionista</option>
+            </select>
+          </div>
+          
+          <div class="form-group" id="especialidadGroup" style="display: none;">
+            <label>Especialidad</label>
+            <input type="text" id="usuarioEspecialidad" class="form-control" placeholder="Ej. Cardiología">
+          </div>
+          
+          <button type="submit" class="btn-primary">Guardar Usuario</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="/js/admin.js"></script>
+</body>
+</html>
