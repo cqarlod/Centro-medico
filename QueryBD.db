@@ -1,0 +1,53 @@
+-- Tabla de usuarios (para login y roles)
+CREATE TABLE usuarios (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    correo VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    rol VARCHAR(50) NOT NULL CHECK (rol IN ('admin', 'doctor', 'recepcionista'))
+);
+
+-- Tabla de doctores (vinculada a usuarios)
+CREATE TABLE doctores (
+    id SERIAL PRIMARY KEY,
+    usuario_id INT UNIQUE NOT NULL,
+    especialidad VARCHAR(100) NOT NULL,
+    foto VARCHAR(255),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+);
+
+-- Tabla de pacientes
+CREATE TABLE pacientes (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    telefono VARCHAR(20),
+    correo VARCHAR(100),
+    fecha_nacimiento DATE NOT NULL
+);
+
+-- Tabla de citas
+CREATE TABLE citas (
+    id SERIAL PRIMARY KEY,
+    paciente_id INT NOT NULL,
+    doctor_id INT NOT NULL,
+    fecha DATE NOT NULL,
+    hora TIME NOT NULL,
+    estado VARCHAR(50) DEFAULT 'Programada' CHECK (estado IN ('Programada', 'Atendida', 'Cancelada')),
+    nota TEXT,
+    FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE,
+    FOREIGN KEY (doctor_id) REFERENCES doctores(id) ON DELETE CASCADE
+);
+
+CREATE TABLE notificaciones_atencion (
+    id SERIAL PRIMARY KEY,
+    cita_id INT NOT NULL,
+    recepcionista_id INT NOT NULL,
+    doctor_id INT NOT NULL,
+    estado VARCHAR(20) DEFAULT 'esperando',
+    mensaje_recepcion TEXT,
+    creado_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    actualizado_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_cita FOREIGN KEY (cita_id) REFERENCES citas(id) ON DELETE CASCADE,
+    CONSTRAINT fk_recep FOREIGN KEY (recepcionista_id) REFERENCES usuarios(id),
+    CONSTRAINT fk_doc FOREIGN KEY (doctor_id) REFERENCES usuarios(id)
+);
