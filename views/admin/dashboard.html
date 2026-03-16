@@ -14,8 +14,116 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
   <!-- Chart.js para gráficos -->
+  <!-- Chart.js para gráficos -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+  <!-- Socket.io y lógica en tiempo real -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/realtime.js"></script>
+
+  <style>
+    /* Estilos para el Tablón de Mensajes General */
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: 60vh;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      overflow: hidden;
+      border: 1px solid #e1e8ed;
+    }
+    .chat-messages {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      background: #f8f9fa;
+    }
+    .chat-msg {
+      max-width: 80%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      position: relative;
+      animation: fadeIn 0.3s ease;
+    }
+    .chat-msg.mine {
+      align-self: flex-end;
+      background: #e3f2fd;
+      border-bottom-right-radius: 2px;
+    }
+    .chat-msg.others {
+      align-self: flex-start;
+      background: #fff;
+      border-bottom-left-radius: 2px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .msg-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+      font-size: 0.8rem;
+    }
+    .msg-name {
+      font-weight: bold;
+      color: #2c3e50;
+    }
+    .msg-role {
+      font-size: 0.7rem;
+      color: #fff;
+      background: #34495e;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 8px;
+    }
+    .msg-role.admin { background: #e74c3c; }
+    .msg-role.recepcionista { background: #f39c12; }
+    .msg-role.doctor { background: #27ae60; }
+    
+    .msg-time {
+      color: #95a5a6;
+      font-size: 0.75rem;
+    }
+    .msg-content {
+      color: #333;
+      line-height: 1.4;
+      font-size: 0.95rem;
+    }
+    .chat-input-area {
+      padding: 15px;
+      background: #fff;
+      border-top: 1px solid #eee;
+      display: flex;
+      gap: 10px;
+    }
+    .chat-input-area textarea {
+      flex: 1;
+      resize: vertical;
+      padding: 12px 15px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      min-height: 45px;
+      font-family: inherit;
+      font-size: 0.95rem;
+    }
+    .chat-input-area button {
+      border-radius: 50%;
+      width: 45px;
+      height: 45px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
 </head>
 <body>
 
@@ -56,6 +164,10 @@
       <li onclick="mostrarSeccion('reportes')">
         <i class="fas fa-chart-bar"></i>
         <span>Reportes</span>
+      </li>
+      <li onclick="mostrarSeccion('mensajes-generales')">
+        <i class="fas fa-bullhorn"></i>
+        <span>General</span>
       </li>
       <li onclick="window.location.href='/perfil'">
         <i class="fas fa-user"></i>
@@ -229,6 +341,28 @@
       <div class="card">
         <h3>Próximamente...</h3>
         <p>Estadísticas detalladas y reportes personalizados</p>
+      </div>
+    </section>
+
+    <!-- SECCION: MENSAJES GENERALES -->
+    <section id="mensajes-generales" class="seccion">
+      <div class="section-header">
+        <h2><i class="fas fa-bullhorn"></i> Tablón General</h2>
+        <p style="color: #7f8c8d; margin-top: 5px;">Revisa o envía comunicados a todo el personal médico.</p>
+      </div>
+
+      <div class="chat-container">
+        <div class="chat-messages" id="chatGeneralMensajes">
+          <!-- Los mensajes se llenan aquí -->
+          <div class="empty-state">Cargando historial de mensajes...</div>
+        </div>
+        
+        <div class="chat-input-area">
+          <textarea id="chatInputExtra" placeholder="Escribe un anuncio para la clínica..."></textarea>
+          <button class="btn-primary" onclick="enviarMensajeGeneral()">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
       </div>
     </section>
 

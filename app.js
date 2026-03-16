@@ -70,6 +70,7 @@ const recepcioRoutes = require("./routes/recepcion.routes");
 const doctorRoutes = require("./routes/doctor.routes");
 const sessionRoutes = require("./routes/session.routes");
 const adminRoutes = require("./routes/admin.routes"); // ✅ NUEVA RUTA DE ADMIN
+const mensajesRoutes = require("./routes/mensajes.routes"); // ✅ NUEVA RUTA DE MENSAJES
 
 // =====================
 // RUTAS DE API
@@ -79,6 +80,7 @@ app.use("/session", sessionRoutes);
 app.use("/api/recepcion", recepcioRoutes);
 app.use("/api/doctor", doctorRoutes);
 app.use("/api/admin", adminRoutes); // ✅ NUEVA RUTA DE ADMIN
+app.use("/api/mensajes", mensajesRoutes); // ✅ NUEVA RUTA DE MENSAJES
 
 // =====================
 // RUTAS PROTEGIDAS POR ROL (VISTAS)
