@@ -12,10 +12,117 @@
   <!-- Tus CSS -->
   <link rel="stylesheet" href="/css/doctor.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <style>
+    /* Estilos para el Panel de Notificaciones */
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .notif-wrapper {
+      position: relative;
+      cursor: pointer;
+    }
+    .notif-bell {
+      font-size: 1.2rem;
+      color: #333;
+      position: relative;
+    }
+    .notif-badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background-color: #e74c3c;
+      color: white;
+      font-size: 0.7rem;
+      font-weight: bold;
+      border-radius: 50%;
+      height: 18px;
+      min-width: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+      display: none; /* Oculto por defecto si es 0 */
+      animation: pulse 2s infinite;
+    }
+    .notif-dropdown {
+      position: absolute;
+      top: 45px;
+      right: -10px;
+      width: 320px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+      border: 1px solid #eee;
+      display: none;
+      flex-direction: column;
+      z-index: 1000;
+      overflow: hidden;
+    }
+    .notif-dropdown.show {
+      display: flex;
+      animation: slideDown 0.2s ease-out;
+    }
+    .notif-header {
+      background: #f8f9fa;
+      padding: 12px 15px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .notif-header h4 {
+      margin: 0;
+      font-size: 0.95rem;
+      color: #333;
+    }
+    .notif-body {
+      max-height: 350px;
+      overflow-y: auto;
+    }
+    .notif-item {
+      padding: 12px 15px;
+      border-bottom: 1px solid #eee;
+      transition: background 0.2s;
+    }
+    .notif-item:hover {
+      background: #fdfdfd;
+    }
+    .notif-item:last-child {
+      border-bottom: none;
+    }
+    .notif-title {
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 4px;
+      font-size: 0.9rem;
+    }
+    .notif-desc {
+      font-size: 0.8rem;
+      color: #7f8c8d;
+      margin-bottom: 8px;
+    }
+    .notif-empty {
+      padding: 20px;
+      text-align: center;
+      color: #95a5a6;
+      font-size: 0.9rem;
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
+      70% { box-shadow: 0 0 0 6px rgba(231, 76, 60, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+    }
+  </style>
 </head>
 <body>
 
-  <!-- NAVBAR -->
   <header class="navbar">
     <button id="menuBtn" class="menu-btn">
       <i class="fas fa-bars"></i>
@@ -24,9 +131,31 @@
       <i class="fas fa-hospital"></i>
       <h1>MedPanel · Doctor</h1>
     </div>
-    <div class="navbar-user">
-      <i class="fas fa-user-md"></i>
-      <span id="usuarioNombre">Doctor</span>
+    
+    <!-- NOTIFICACIONES CONTAINER DOCTOR FLOTANTE -->
+    <div id="notificaciones-container" style="position:fixed; top:70px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:10px;"></div>
+
+    <div class="nav-actions">
+      <!-- PANEL DE NOTIFICACIONES INCORPORADO -->
+      <div class="notif-wrapper" id="btnCampana" title="Notificaciones">
+        <i class="fas fa-bell notif-bell"></i>
+        <span class="notif-badge" id="contadorNotif">0</span>
+        
+        <!-- DROPDOWN DEL PANEL -->
+        <div class="notif-dropdown" id="panelNotificaciones">
+          <div class="notif-header">
+            <h4><i class="fas fa-inbox"></i> Salas de Espera</h4>
+          </div>
+          <div class="notif-body" id="listaNotificaciones">
+            <div class="notif-empty">No hay pacientes en espera</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="navbar-user">
+        <i class="fas fa-user-md"></i>
+        <span id="usuarioNombre">Doctor</span>
+      </div>
     </div>
   </header>
 
@@ -289,6 +418,10 @@
   </div>
 
   <div id="toast" class="toast"></div>
+
+  <!-- SCRIPT DE WEBSOCKETS -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/realtime.js"></script>
 
   <!-- SOLO ESTE SCRIPT - EL EXTERNO -->
   <script src="/js/doctor.js"></script>

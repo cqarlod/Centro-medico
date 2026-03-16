@@ -1,10 +1,15 @@
 const express = require("express");
 const session = require("express-session");
 const path = require("path");
+const http = require("http");
+const socketIo = require("socket.io");
 
 require("dotenv").config();
 
 const app = express();
+const server = http.createServer(app);
+const io = socketIo(server);
+app.set('socketio', io);
 
 // =====================
 // MIDDLEWARES GENERALES
@@ -157,8 +162,32 @@ app.use((req, res) => {
 });
 
 // =====================
+// WEBSOCKETS (SOCKET.IO)
+// =====================
+io.on('connection', (socket) => {
+  console.log('🔗 Cliente conectado a WebSockets:', socket.id);
+
+  // Cuando la recepcionista avisa llegada
+  socket.on('notificar-paciente', (data) => {
+      console.log(`🔔 Recepcionista manda paciente ${data.paciente} al Doctor ID: ${data.doctorId}`);
+      // Re-emitir evento solo a los doctores correspondientes mediante un room virtual o broadcast filtrable
+      io.emit(`doctor-${data.doctorId}`, data);
+  });
+
+  // Cuando el doctor autoriza que puede pasar
+  socket.on('autorizar-paso', (data) => {
+      console.log(`✅ Doctor autorizó el paso a: ${data.paciente} (Avisando a Recepción ID: ${data.recepcionistaId})`);
+      io.emit(`recepcion-${data.recepcionistaId}`, data);
+  });
+
+  socket.on('disconnect', () => {
+      console.log('❌ Cliente desconectado:', socket.id);
+  });
+});
+
+// =====================
 // SERVIDOR
 // =====================
-app.listen(3000, () => {
+server.listen(3000, () => {
   console.log("Servidor corriendo en http://localhost:3000/login.html");
 });

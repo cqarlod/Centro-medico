@@ -228,4 +228,38 @@ router.get("/citas-calendario", async (req, res) => {
   }
 });
 
+// Guardar notificación en DB y emitir por socket
+router.post("/citas/:id/notificar", async (req, res) => {
+  try {
+    const citaId = req.params.id;
+    const { doctor_id, paciente_nombre } = req.body;
+    const recepcionista_id = req.session.usuario.id;
+
+    // 1. Guardar en Base de Datos (Supabase)
+    const result = await db.query(
+      `INSERT INTO notificaciones_atencion 
+      (cita_id, recepcionista_id, doctor_id, estado, mensaje_recepcion) 
+      VALUES ($1, $2, $3, 'pendiente', $4) RETURNING *`,
+      [citaId, recepcionista_id, doctor_id, 'El paciente ha llegado y está en sala de espera']
+    );
+
+    // 2. Emitir evento por WebSockets
+    const io = req.app.get('socketio');
+    if (io) {
+      io.emit(`doctor-${doctor_id}`, {
+        paciente: paciente_nombre,
+        doctorId: doctor_id,
+        recepcionistaId: recepcionista_id,
+        notificacionId: result.rows[0].id
+      });
+    }
+
+    res.json({ message: "Notificación guardada y enviada", data: result.rows[0] });
+
+  } catch (error) {
+    console.error("Error al registrar notificación:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

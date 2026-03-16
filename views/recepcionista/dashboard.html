@@ -432,6 +432,9 @@
               </div>
               ${estado === 'Programada' ? `
                 <div class="cita-acciones">
+                  <button onclick="avisarLlegada('${c.paciente.replace(/'/g, "\\'")}', ${c.doctor_id}, ${c.id})" class="btn-icon warning" title="Notificar llegada al doctor">
+                    <i class="fas fa-bell"></i>
+                  </button>
                   <button onclick="cambiarEstado(${c.id}, 'Atendida')" class="btn-icon success" title="Marcar como atendida">
                     <i class="fas fa-check"></i>
                   </button>
@@ -448,6 +451,29 @@
         console.error('Error cargando citas:', error);
         document.getElementById("listaCitas").innerHTML = 
           '<div class="empty-state error">Error al cargar las citas</div>';
+      }
+    }
+
+    // Enviar notificación a doctor persistiendo en base de datos
+    async function avisarLlegada(pacienteNombre, doctorId, citaId) {
+      if (!confirm(`¿Notificar al doctor la llegada de ${pacienteNombre}?`)) return;
+
+      try {
+        const res = await fetch(`/api/recepcion/citas/${citaId}/notificar`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ doctor_id: doctorId, paciente_nombre: pacienteNombre })
+        });
+
+        if (!res.ok) {
+          const error = await res.json();
+          throw new Error(error.error || 'Error enviando notificación');
+        }
+
+        mostrarToast("Aviso enviado al doctor", "success");
+      } catch (error) {
+        console.error("Error al notificar:", error);
+        mostrarToast(error.message, "error");
       }
     }
 
