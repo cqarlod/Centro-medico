@@ -426,7 +426,7 @@ window.onload = async () => {
     const res = await fetch("/check-session");
     const data = await res.json();
     if (data.autenticado) {
-      document.getElementById("usuarioNombre").textContent = data.usuario.nombre;
+      document.getElementById("nombreUsuarioNavbar").textContent = data.usuario.nombre;
     }
   } catch (error) {
     console.error("Error cargando usuario:", error);
