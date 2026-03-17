@@ -7,6 +7,9 @@ let calendar;
 let doctorData = {};
 let pacienteActual = null; // Para el historial
 
+// WEBSOCKETS RE-IMPLEMENTACION
+let myDoctorId = null;
+
 // Toggle sidebar
 menuBtn.addEventListener("click", () => {
   sidebar.classList.toggle("open");
@@ -61,13 +64,117 @@ async function cargarDatosDoctor() {
     if (!res.ok) throw new Error("Error al cargar perfil");
     
     doctorData = await res.json();
-    document.getElementById("usuarioNombre").textContent = doctorData.nombre;
+    document.getElementById("usuarioNombre").textContent = "Dr. " + doctorData.nombre;
+    myDoctorId = doctorData.doctor_id; // <- Corregido de .id a .doctor_id
+
+    // Iniciar Websocket al estar autenticado
+    iniciarRecibidorCitasEnVivo();
     
   } catch (error) {
     console.error("Error:", error);
     mostrarToast("Error al cargar datos del doctor", "error");
   }
 }
+
+// =============================================
+// FUNCIONES NOTIFICACION EN TIEMPO REAL
+// =============================================
+let notificacionesPendientes = 0;
+
+// Obtener elementos del DOM
+document.addEventListener("DOMContentLoaded", () => {
+  const btnCampana = document.getElementById("btnCampana");
+  const panelNotificaciones = document.getElementById("panelNotificaciones");
+  
+  if (btnCampana && panelNotificaciones) {
+    // Abrir/cerrar panel al hacer click en la campana
+    btnCampana.addEventListener("click", (e) => {
+      // Evitar que el click se propague si hacemos click en un boton dentro del panel
+      if(e.target.tagName === 'BUTTON' || e.target.parentElement.tagName === 'BUTTON') return;
+      panelNotificaciones.classList.toggle("show");
+    });
+    
+    // Cerrar panel al hacer click fuera de el
+    document.addEventListener("click", (e) => {
+      if (!btnCampana.contains(e.target)) {
+        panelNotificaciones.classList.remove("show");
+      }
+    });
+  }
+});
+
+function actualizarContadorNotificaciones(cambio) {
+  notificacionesPendientes += cambio;
+  if (notificacionesPendientes < 0) notificacionesPendientes = 0;
+  
+  const badge = document.getElementById("contadorNotif");
+  const lista = document.getElementById("listaNotificaciones");
+  
+  if(badge) {
+    badge.textContent = notificacionesPendientes;
+    badge.style.display = notificacionesPendientes > 0 ? "flex" : "none";
+  }
+  
+  if(notificacionesPendientes === 0 && lista) {
+    lista.innerHTML = '<div class="notif-empty">No hay pacientes en espera</div>';
+  }
+}
+
+function iniciarRecibidorCitasEnVivo() {
+  if (typeof socket === 'undefined' || !myDoctorId) return;
+
+  socket.on(`doctor-${myDoctorId}`, (data) => {
+      const lista = document.getElementById('listaNotificaciones');
+      if(!lista) return;
+      
+      const safeId = data.paciente.replace(/\s+/g, '-');
+      
+      // Si habia un empty state, limpiarlo
+      if(notificacionesPendientes === 0) {
+        lista.innerHTML = '';
+      }
+      
+      const nuevaAlerta = `
+          <div class="notif-item" id="notif-${safeId}">
+              <div class="notif-title"><i class="fas fa-user"></i> ${data.paciente}</div>
+              <div class="notif-desc">Acaba de llegar a recepcion.</div>
+              <button class="btn-primary small" style="width:100%;" onclick="confirmarPasoUI(event, '${data.paciente.replace(/'/g, "\\'")}', ${data.recepcionistaId}, '${safeId}')">
+                <i class="fas fa-check-circle"></i> Autorizar Paso
+              </button>
+          </div>
+      `;
+      // Agregar la notificacion arriba de las demas
+      lista.insertAdjacentHTML('afterbegin', nuevaAlerta);
+      
+      // Aumentar contador
+      actualizarContadorNotificaciones(1);
+      
+      // Sonido
+      try {
+        new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play().catch(() => {});
+      } catch (e) {}
+  });
+}
+
+window.confirmarPasoUI = function(event, nombre, recepId, divId) {
+    // Evitar propagacion al dropdown
+    if (event) event.stopPropagation();
+    
+    // Enviar evento de confirmacion por websockets
+    if (typeof responderAlPaso !== 'undefined') {
+        responderAlPaso(nombre, recepId);
+    }
+    
+    // Remover item visualmente del panel
+    const item = document.getElementById(`notif-${divId}`);
+    if (item) {
+        item.style.opacity = '0';
+        setTimeout(() => {
+            item.remove();
+            actualizarContadorNotificaciones(-1);
+        }, 300);
+    }
+};
 
 // =============================================
 // FUNCIONES DE DEPURACION PARA EL CALENDARIO
