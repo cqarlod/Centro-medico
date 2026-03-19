@@ -1,4 +1,5 @@
 const socket = io();
+window.socket = socket;
 
 // Función que usará la recepcionista
 function enviarAvisoAlDoctor(nombrePaciente, idDoctor, idRecep) {

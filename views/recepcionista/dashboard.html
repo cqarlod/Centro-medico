@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Recepcionista · MedPanel</title>
   <link rel="stylesheet" href="/css/recepcion.css" />
-    <!-- fullcalendar -->
+  <!-- fullcalendar -->
   <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/main.css' rel='stylesheet' />
   <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
   <!-- Font Awesome para iconos -->
@@ -19,10 +20,11 @@
       height: 60vh;
       background: #fff;
       border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
       overflow: hidden;
       border: 1px solid #e1e8ed;
     }
+
     .chat-messages {
       flex: 1;
       padding: 20px;
@@ -32,6 +34,7 @@
       gap: 15px;
       background: #f8f9fa;
     }
+
     .chat-msg {
       max-width: 80%;
       padding: 12px 16px;
@@ -39,17 +42,20 @@
       position: relative;
       animation: fadeIn 0.3s ease;
     }
+
     .chat-msg.mine {
       align-self: flex-end;
       background: #e3f2fd;
       border-bottom-right-radius: 2px;
     }
+
     .chat-msg.others {
       align-self: flex-start;
       background: #fff;
       border-bottom-left-radius: 2px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
+
     .msg-header {
       display: flex;
       justify-content: space-between;
@@ -57,10 +63,12 @@
       margin-bottom: 5px;
       font-size: 0.8rem;
     }
+
     .msg-name {
       font-weight: bold;
       color: #2c3e50;
     }
+
     .msg-role {
       font-size: 0.7rem;
       color: #fff;
@@ -69,19 +77,30 @@
       border-radius: 4px;
       margin-left: 8px;
     }
-    .msg-role.admin { background: #e74c3c; }
-    .msg-role.recepcionista { background: #f39c12; }
-    .msg-role.doctor { background: #27ae60; }
-    
+
+    .msg-role.admin {
+      background: #e74c3c;
+    }
+
+    .msg-role.recepcionista {
+      background: #f39c12;
+    }
+
+    .msg-role.doctor {
+      background: #27ae60;
+    }
+
     .msg-time {
       color: #95a5a6;
       font-size: 0.75rem;
     }
+
     .msg-content {
       color: #333;
       line-height: 1.4;
       font-size: 0.95rem;
     }
+
     .chat-input-area {
       padding: 15px;
       background: #fff;
@@ -89,6 +108,7 @@
       display: flex;
       gap: 10px;
     }
+
     .chat-input-area textarea {
       flex: 1;
       resize: vertical;
@@ -99,6 +119,7 @@
       font-family: inherit;
       font-size: 0.95rem;
     }
+
     .chat-input-area button {
       border-radius: 50%;
       width: 45px;
@@ -109,12 +130,21 @@
       justify-content: center;
       flex-shrink: 0;
     }
+
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
   </style>
 </head>
+
 <body>
 
   <!-- NAVBAR -->
@@ -335,9 +365,10 @@
           <!-- Los mensajes se llenan aquí -->
           <div class="empty-state">Cargando historial de mensajes...</div>
         </div>
-        
+
         <div class="chat-input-area">
-          <textarea id="chatInputExtra" placeholder="Escribe un anuncio para todos los doctores y administradores..."></textarea>
+          <textarea id="chatInputExtra"
+            placeholder="Escribe un anuncio para todos los doctores y administradores..."></textarea>
           <button class="btn-primary" onclick="enviarMensajeGeneral()">
             <i class="fas fa-paper-plane"></i>
           </button>
@@ -375,13 +406,13 @@
         sec.classList.remove("activa");
       });
       document.getElementById(id).classList.add("activa");
-      
+
       // Actualizar active en sidebar
       document.querySelectorAll(".sidebar li").forEach(li => {
         li.classList.remove("active");
       });
       event.currentTarget.classList.add("active");
-      
+
       sidebar.classList.remove("open");
     }
 
@@ -391,7 +422,7 @@
       toast.textContent = mensaje;
       toast.className = `toast ${tipo}`;
       toast.style.display = 'block';
-      
+
       setTimeout(() => {
         toast.style.display = 'none';
       }, 3000);
@@ -533,7 +564,7 @@
         const citas = await res.json();
 
         const lista = document.getElementById("listaCitas");
-    
+
         if (citas.length === 0) {
           lista.innerHTML = '<div class="empty-state">No hay citas programadas para hoy</div>';
           return;
@@ -542,7 +573,7 @@
         lista.innerHTML = citas.map(c => {
           // Asegurar que estado tenga un valor por defecto
           const estado = c.estado || 'Programada';
-      
+
           return `
             <div class="cita-card ${estado.toLowerCase()}">
               <div class="cita-hora">
@@ -577,10 +608,10 @@
             </div>
           `;
         }).join('');
-    
+
       } catch (error) {
         console.error('Error cargando citas:', error);
-        document.getElementById("listaCitas").innerHTML = 
+        document.getElementById("listaCitas").innerHTML =
           '<div class="empty-state error">Error al cargar las citas</div>';
       }
     }
@@ -617,82 +648,82 @@
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ estado: nuevoEstado })
-      });
+        });
 
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || 'Error al actualizar');
+        if (!res.ok) {
+          const error = await res.json();
+          throw new Error(error.message || 'Error al actualizar');
+        }
+
+        mostrarToast(`Cita marcada como ${nuevoEstado}`, 'success');
+        cargarCitasHoy();
+
+      } catch (error) {
+        console.error('Error:', error);
+        mostrarToast(error.message, 'error');
       }
-
-      mostrarToast(`Cita marcada como ${nuevoEstado}`, 'success');
-      cargarCitasHoy();
-    
-    } catch (error) {
-      console.error('Error:', error);
-      mostrarToast(error.message, 'error');
     }
-  }
 
     // Buscar pacientes
     document.getElementById('buscarPaciente')?.addEventListener('input', (e) => {
       const termino = e.target.value.toLowerCase();
       const cards = document.querySelectorAll('.paciente-card');
-      
+
       cards.forEach(card => {
         const texto = card.textContent.toLowerCase();
         card.style.display = texto.includes(termino) ? 'flex' : 'none';
       });
     });
-    
+
     //Funciones de calendario
     let calendar;
 
     function inicializarCalendario() {
-    console.log("🚀 Inicializando calendario...");
-  
-    const calendarEl = document.getElementById('calendario-container');
-    console.log("📦 Contenedor:", calendarEl);
-  
-    if (!calendarEl) {
-      console.error("❌ No se encontró el elemento #calendario-container");
-      return;
-    }
-  
-    calendar = new FullCalendar.Calendar(calendarEl, {
-      initialView: 'timeGridWeek',
-      headerToolbar: {
-        left: 'prev,next today',
-        center: 'title',
-        right: 'dayGridMonth,timeGridWeek,timeGridDay'
-      },
-      locale: 'es',
-      buttonText: {
-        today: 'Hoy',
-        month: 'Mes',
-        week: 'Semana',
-        day: 'Día'
-      },
-      slotMinTime: '08:00:00',
-      slotMaxTime: '20:00:00',
-      allDaySlot: false,
-      slotDuration: '00:30:00',
-      height: 'auto',
-      events: cargarEventosCalendario,
-      eventDidMount: function(info) {
-        console.log("Evento montado:", info.event.title);
+      console.log("🚀 Inicializando calendario...");
+
+      const calendarEl = document.getElementById('calendario-container');
+      console.log("📦 Contenedor:", calendarEl);
+
+      if (!calendarEl) {
+        console.error("❌ No se encontró el elemento #calendario-container");
+        return;
       }
-    });
-  
-    calendar.render();
-    console.log("✅ Calendario renderizado");
-    cargarDoctoresCalendario();
-  }
+
+      calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'timeGridWeek',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        locale: 'es',
+        buttonText: {
+          today: 'Hoy',
+          month: 'Mes',
+          week: 'Semana',
+          day: 'Día'
+        },
+        slotMinTime: '08:00:00',
+        slotMaxTime: '20:00:00',
+        allDaySlot: false,
+        slotDuration: '00:30:00',
+        height: 'auto',
+        events: cargarEventosCalendario,
+        eventDidMount: function (info) {
+          console.log("Evento montado:", info.event.title);
+        }
+      });
+
+      calendar.render();
+      console.log("✅ Calendario renderizado");
+      cargarDoctoresCalendario();
+    }
 
     async function cargarDoctoresCalendario() {
       try {
         const res = await fetch("/api/recepcion/doctores-lista");
         const doctores = await res.json();
-        
+
         const select = document.getElementById("calendarioDoctor");
         doctores.forEach(doc => {
           const option = document.createElement("option");
@@ -707,24 +738,24 @@
 
     async function cargarEventosCalendario(fetchInfo, successCallback, failureCallback) {
       console.log("🔍 Cargando eventos reales...");
-  
+
       try {
         const doctorId = document.getElementById("calendarioDoctor").value;
         const fechaInicio = fetchInfo.startStr.split('T')[0];
         const fechaFin = fetchInfo.endStr.split('T')[0];
-    
+
         const url = `/api/recepcion/citas-calendario?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}${doctorId !== 'todos' ? `&doctor_id=${doctorId}` : ''}`;
-    
+
         const res = await fetch(url);
         const citas = await res.json();
-    
+
         console.log("✅ Citas reales recibidas:", citas);
-    
+
         if (citas.length === 0) {
           successCallback([]);
           return;
         }
-    
+
         const eventos = citas.map(c => {
           // 🔴 FORZAR formato de fecha YYYY-MM-DD
           let fechaStr;
@@ -739,7 +770,7 @@
             // Si ya está en formato YYYY-MM-DD
             fechaStr = c.fecha;
           }
-      
+
           // 🔴 FORZAR formato de hora HH:MM:SS
           let horaStr = c.hora;
           if (horaStr && horaStr.length === 5) {
@@ -752,9 +783,9 @@
             // Valor por defecto
             horaStr = '09:00:00';
           }
-      
+
           console.log(`📅 Cita real: ${fechaStr} ${horaStr} - ${c.paciente}`);
-      
+
           return {
             id: c.id,
             title: `${c.paciente} - ${c.doctor}`,
@@ -765,10 +796,10 @@
             allDay: false
           };
         });
-    
+
         console.log("📊 Eventos reales generados:", eventos);
         successCallback(eventos);
-    
+
       } catch (error) {
         console.error("❌ Error:", error);
         failureCallback(error);
@@ -780,17 +811,17 @@
       const horaParts = hora.split(':');
       const horas = parseInt(horaParts[0]);
       const minutos = parseInt(horaParts[1]) || 0;
-  
+
       // Crear fecha fin (30 minutos después)
-      const fechaFin = new Date(`${fecha}T${horas.toString().padStart(2,'0')}:${minutos.toString().padStart(2,'0')}:00`);
+      const fechaFin = new Date(`${fecha}T${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}:00`);
       fechaFin.setMinutes(fechaFin.getMinutes() + 30);
-  
+
       // Devolver en formato ISO
       return fechaFin.toISOString();
     }
 
     function colorPorEstado(estado) {
-      switch(estado) {
+      switch (estado) {
         case 'Programada': return '#0a3b5c';
         case 'Atendida': return '#28a745';
         case 'Cancelada': return '#dc3545';
@@ -806,15 +837,34 @@
     }
 
     // Inicializar
-    window.onload = () => {
+    window.onload = async () => {
       cargarPacientes();
       cargarDoctores();
       cargarCitasHoy();
       inicializarCalendario();
+
+      // Escuchar autorizaciones de paso del doctor
+      try {
+        const sessionRes = await fetch("/check-session");
+        const sessionData = await sessionRes.json();
+        if (sessionData.autenticado && typeof socket !== 'undefined') {
+          const miId = sessionData.usuario.id;
+          socket.on(`recepcion-${miId}`, (data) => {
+            mostrarToast(`El doctor acaba de REVISAR y AUTORIZAR el paso a: ${data.paciente}`, 'success');
+            // Alerta sonora
+            try {
+              new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play().catch(() => { });
+            } catch (e) { }
+          });
+        }
+      } catch (error) {
+        console.error("Error al suscribirse al socket de autorizacion:", error);
+      }
     };
   </script>
   <!-- Socket.io y lógica en tiempo real -->
   <script src="/socket.io/socket.io.js"></script>
   <script src="/js/realtime.js"></script>
 </body>
+
 </html>
