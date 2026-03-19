@@ -51,3 +51,12 @@ CREATE TABLE notificaciones_atencion (
     CONSTRAINT fk_recep FOREIGN KEY (recepcionista_id) REFERENCES usuarios(id),
     CONSTRAINT fk_doc FOREIGN KEY (doctor_id) REFERENCES usuarios(id)
 );
+
+CREATE TABLE mensajes_generales (
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    usuarios_id INTEGER REFERENCES usuarios(id),
+    emisor_rol VARCHAR,
+    emisor_nombre VARCHAR,
+    mensaje TEXT,
+    fecha_envio TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
