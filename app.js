@@ -57,6 +57,13 @@ app.get("/login.html", (req, res) => {
 });
 
 // =====================
+// REDIRECCIÓN DE LA RAÍZ
+// =====================
+app.get("/", (req, res) => {
+  res.redirect("/login.html");
+});
+
+// =====================
 // IMPORTS DE RUTAS
 // =====================
 const authRoutes = require("./routes/auth.routes");
@@ -191,5 +198,5 @@ io.on('connection', (socket) => {
 // SERVIDOR
 // =====================
 server.listen(3000, () => {
-  console.log("Servidor corriendo en http://localhost:3000/login.html");
+  console.log("Servidor corriendo en http://localhost:3000/");
 });
