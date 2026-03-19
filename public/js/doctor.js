@@ -76,6 +76,17 @@ async function cargarDatosDoctor() {
   }
 }
 
+function iniciarRefrescoAutomatico() {
+  setInterval(() => {
+    console.log("Refrescando calendario...");
+    if (calendar) {
+      calendar.refetchEvents(); // Recarga los eventos del calendario
+      cargarListaCitas(); // Recarga la tabla de citas
+      cargarEstadisticas(); // Recarga las estadísticas
+    }
+  }, 30000); // 30 segundos
+}
+
 // =============================================
 // FUNCIONES NOTIFICACION EN TIEMPO REAL
 // =============================================
@@ -681,6 +692,7 @@ window.onload = async () => {
   await cargarEstadisticas();
   await cargarListaCitas();
   await cargarPacientes();
+  iniciarRefrescoAutomatico();
 };
 
 // Hacer funciones globales
