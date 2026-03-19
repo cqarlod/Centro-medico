@@ -12,7 +12,7 @@ pool.connect((err, client, release) => {
   if (err) {
     return console.error('Error conectando a Supabase:', err.stack);
   }
-  console.log('✅ Conectado a Supabase');
+  console.log('Conectado a Supabase');
   release();
 });
 
