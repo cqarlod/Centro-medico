@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doctor · MedPanel</title>
+  
+  <!-- FullCalendar -->
+  <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+  <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+  
+  <!-- Tus CSS -->
+  <link rel="stylesheet" href="/css/doctor.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <style>
+    /* Estilos para el Panel de Notificaciones */
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .notif-wrapper {
+      position: relative;
+      cursor: pointer;
+    }
+    .notif-bell {
+      font-size: 1.2rem;
+      color: #333;
+      position: relative;
+    }
+    .notif-badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background-color: #e74c3c;
+      color: white;
+      font-size: 0.7rem;
+      font-weight: bold;
+      border-radius: 50%;
+      height: 18px;
+      min-width: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+      display: none; /* Oculto por defecto si es 0 */
+      animation: pulse 2s infinite;
+    }
+    .notif-dropdown {
+      position: absolute;
+      top: 45px;
+      right: -10px;
+      width: 320px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+      border: 1px solid #eee;
+      display: none;
+      flex-direction: column;
+      z-index: 1000;
+      overflow: hidden;
+    }
+    .notif-dropdown.show {
+      display: flex;
+      animation: slideDown 0.2s ease-out;
+    }
+    .notif-header {
+      background: #f8f9fa;
+      padding: 12px 15px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .notif-header h4 {
+      margin: 0;
+      font-size: 0.95rem;
+      color: #333;
+    }
+    .notif-body {
+      max-height: 350px;
+      overflow-y: auto;
+    }
+    .notif-item {
+      padding: 12px 15px;
+      border-bottom: 1px solid #eee;
+      transition: background 0.2s;
+    }
+    .notif-item:hover {
+      background: #fdfdfd;
+    }
+    .notif-item:last-child {
+      border-bottom: none;
+    }
+    .notif-title {
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 4px;
+      font-size: 0.9rem;
+    }
+    .notif-desc {
+      font-size: 0.8rem;
+      color: #7f8c8d;
+      margin-bottom: 8px;
+    }
+    .notif-empty {
+      padding: 20px;
+      text-align: center;
+      color: #95a5a6;
+      font-size: 0.9rem;
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
+      70% { box-shadow: 0 0 0 6px rgba(231, 76, 60, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+    }
+    /* Estilos para el Tablón de Mensajes General */
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: 60vh;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      overflow: hidden;
+      border: 1px solid #e1e8ed;
+    }
+    .chat-messages {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      background: #f8f9fa;
+    }
+    .chat-msg {
+      max-width: 80%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      position: relative;
+      animation: fadeIn 0.3s ease;
+    }
+    .chat-msg.mine {
+      align-self: flex-end;
+      background: #e3f2fd;
+      border-bottom-right-radius: 2px;
+    }
+    .chat-msg.others {
+      align-self: flex-start;
+      background: #fff;
+      border-bottom-left-radius: 2px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .msg-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+      font-size: 0.8rem;
+    }
+    .msg-name {
+      font-weight: bold;
+      color: #2c3e50;
+    }
+    .msg-role {
+      font-size: 0.7rem;
+      color: #fff;
+      background: #34495e;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 8px;
+    }
+    .msg-role.admin { background: #e74c3c; }
+    .msg-role.recepcionista { background: #f39c12; }
+    .msg-role.doctor { background: #27ae60; }
+    
+    .msg-time {
+      color: #95a5a6;
+      font-size: 0.75rem;
+    }
+    .msg-content {
+      color: #333;
+      line-height: 1.4;
+      font-size: 0.95rem;
+    }
+    .chat-input-area {
+      padding: 15px;
+      background: #fff;
+      border-top: 1px solid #eee;
+      display: flex;
+      gap: 10px;
+    }
+    .chat-input-area textarea {
+      flex: 1;
+      resize: none;
+      padding: 10px 15px;
+      border: 1px solid #ddd;
+      border-radius: 20px;
+      height: 20px;
+      font-family: inherit;
+    }
+    .chat-input-area button {
+      border-radius: 50%;
+      width: 45px;
+      height: 45px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="navbar">
+    <button id="menuBtn" class="menu-btn">
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="navbar-brand">
+      <i class="fas fa-hospital"></i>
+      <h1>MedPanel · Doctor</h1>
+    </div>
+    
+    <!-- NOTIFICACIONES CONTAINER DOCTOR FLOTANTE -->
+    <div id="notificaciones-container" style="position:fixed; top:70px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:10px;"></div>
+
+    <div class="nav-actions">
+      <!-- PANEL DE NOTIFICACIONES INCORPORADO -->
+      <div class="notif-wrapper" id="btnCampana" title="Notificaciones">
+        <i class="fas fa-bell notif-bell"></i>
+        <span class="notif-badge" id="contadorNotif">0</span>
+        
+        <!-- DROPDOWN DEL PANEL -->
+        <div class="notif-dropdown" id="panelNotificaciones">
+          <div class="notif-header">
+            <h4><i class="fas fa-inbox"></i> Salas de Espera</h4>
+          </div>
+          <div class="notif-body" id="listaNotificaciones">
+            <div class="notif-empty">No hay pacientes en espera</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="navbar-user">
+        <i class="fas fa-user-md"></i>
+        <span id="usuarioNombre">Doctor</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <i class="fas fa-calendar-alt"></i>
+      <span>Menu</span>
+    </div>
+    <ul>
+      <li onclick="mostrarSeccion('dashboard')" class="active">
+        <i class="fas fa-calendar-alt"></i>
+        <span>Mi Calendario</span>
+      </li>
+      <li onclick="mostrarSeccion('citas')">
+        <i class="fas fa-list"></i>
+        <span>Lista de Citas</span>
+      </li>
+      <li onclick="mostrarSeccion('pacientes')">
+        <i class="fas fa-users"></i>
+        <span>Mis Pacientes</span>
+      </li>
+      <li onclick="mostrarSeccion('mensajes-generales')">
+        <i class="fas fa-bullhorn"></i>
+        <span>General</span>
+      </li>
+      <li onclick="window.location.href='/perfil'">
+        <i class="fas fa-user"></i>
+        <span>Mi Perfil</span>
+      </li>
+      <li onclick="cerrarSesion()" class="logout">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Cerrar sesion</span>
+      </li>
+    </ul>
+  </aside>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="content">
+
+    <!-- SECCION CALENDARIO -->
+    <section id="dashboard" class="seccion activa">
+      <div class="section-header">
+        <h2><i class="fas fa-calendar-alt"></i> Mi Calendario</h2>
+      </div>
+
+      <!-- Estadisticas rapidas -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon blue">
+            <i class="fas fa-calendar-day"></i>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Citas hoy</span>
+            <span class="stat-value" id="totalHoy">0</span>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon green">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Atendidas</span>
+            <span class="stat-value" id="atendidasHoy">0</span>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon yellow">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Pendientes</span>
+            <span class="stat-value" id="pendientesHoy">0</span>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon orange">
+            <i class="fas fa-calendar-week"></i>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Proximas</span>
+            <span class="stat-value" id="proximasCitas">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Calendario -->
+      <div class="card">
+        <div id="calendario-doctor"></div>
+      </div>
+    </section>
+
+    <!-- SECCION LISTA DE CITAS -->
+    <section id="citas" class="seccion">
+      <div class="section-header">
+        <h2><i class="fas fa-list"></i> Lista de Citas</h2>
+      </div>
+
+      <!-- Filtros -->
+      <div class="card">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="filtroFecha">Fecha</label>
+            <input type="date" id="filtroFecha" class="form-control">
+          </div>
+          
+          <div class="form-group">
+            <label for="filtroEstado">Estado</label>
+            <select id="filtroEstado" class="form-control">
+              <option value="todos">Todos</option>
+              <option value="Programada">Programada</option>
+              <option value="Atendida">Atendida</option>
+              <option value="Cancelada">Cancelada</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <button onclick="cargarListaCitas()" class="btn-primary">
+              <i class="fas fa-search"></i> Filtrar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla de citas -->
+      <div class="card">
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Paciente</th>
+                <th>Telefono</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tablaCitas">
+              <tr>
+                <td colspan="6" class="text-center">Cargando...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCION PACIENTES -->
+    <section id="pacientes" class="seccion">
+      <div class="section-header">
+        <h2><i class="fas fa-users"></i> Mis Pacientes</h2>
+        <p style="color: #7f8c8d; margin-top: 5px;">Mantén organizada tu cartera de pacientes atendidos</p>
+      </div>
+
+      <div class="card">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="buscarPaciente" placeholder="Buscar paciente...">
+        </div>
+
+        <div class="pacientes-grid" id="listaPacientes">
+          <!-- Pacientes cargados dinamicamente -->
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCION: MENSAJES GENERALES -->
+    <section id="mensajes-generales" class="seccion">
+      <div class="section-header">
+        <h2><i class="fas fa-bullhorn"></i> Tablón General</h2>
+        <p style="color: #7f8c8d; margin-top: 5px;">Comunicados de Recepción y Administración de la Clínica.</p>
+      </div>
+
+      <div class="chat-container">
+        <div class="chat-messages" id="chatGeneralMensajes">
+          <!-- Los mensajes se llenan aquí -->
+          <div class="empty-state">Cargando historial de mensajes...</div>
+        </div>
+        
+        <!-- Input desactivado para doctores -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Modal para reprogramar cita -->
+  <div id="modalReprogramar" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Reprogramar Cita</h3>
+        <span class="close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="formReprogramar">
+          <input type="hidden" id="reprogramarCitaId">
+          
+          <div class="form-group">
+            <label>Nueva Fecha</label>
+            <input type="date" id="nuevaFecha" class="form-control" required>
+          </div>
+          
+          <div class="form-group">
+            <label>Nueva Hora</label>
+            <input type="time" id="nuevaHora" class="form-control" required>
+          </div>
+          
+          <button type="submit" class="btn-primary">Actualizar Cita</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para notas -->
+  <div id="modalNota" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Nota de la Cita</h3>
+        <span class="close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="formNota">
+          <input type="hidden" id="notaCitaId">
+          
+          <div class="form-group">
+            <label>Nota</label>
+            <textarea id="notaTexto" class="form-control" rows="5"></textarea>
+          </div>
+          
+          <button type="submit" class="btn-primary">Guardar Nota</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== NUEVO MODAL PARA HISTORIAL DEL PACIENTE ========== -->
+  <div id="modalHistorial" class="modal">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h3><i class="fas fa-notes-medical"></i> Historial del Paciente</h3>
+        <span class="close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div id="historialContent">
+          <!-- Datos del paciente -->
+          <div class="paciente-info-header" id="infoPaciente">
+            <h4 id="pacienteNombre">Cargando...</h4>
+            <p><i class="fas fa-phone"></i> <span id="pacienteTelefono">-</span></p>
+            <p><i class="fas fa-envelope"></i> <span id="pacienteCorreo">-</span></p>
+            <p><i class="fas fa-birthday-cake"></i> <span id="pacienteNacimiento">-</span></p>
+          </div>
+          
+          <hr>
+          
+          <h4>Historial de Citas</h4>
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Hora</th>
+                  <th>Estado</th>
+                  <th>Nota</th>
+                </tr>
+              </thead>
+              <tbody id="historialCitas">
+                <tr>
+                  <td colspan="4" class="text-center">Cargando historial...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" onclick="cerrarHistorial()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <!-- SCRIPT DE WEBSOCKETS -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/realtime.js"></script>
+
+  <!-- SOLO ESTE SCRIPT - EL EXTERNO -->
+  <script src="/js/doctor.js"></script>
+    
+</body>
+</html>

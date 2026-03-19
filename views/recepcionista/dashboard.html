@@ -1,13 +1,150 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Recepcionista · MedPanel</title>
   <link rel="stylesheet" href="/css/recepcion.css" />
+  <!-- fullcalendar -->
+  <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/main.css' rel='stylesheet' />
+  <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
   <!-- Font Awesome para iconos -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <style>
+    /* Estilos para el Tablón de Mensajes General */
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: 60vh;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+      border: 1px solid #e1e8ed;
+    }
+
+    .chat-messages {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      background: #f8f9fa;
+    }
+
+    .chat-msg {
+      max-width: 80%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      position: relative;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .chat-msg.mine {
+      align-self: flex-end;
+      background: #e3f2fd;
+      border-bottom-right-radius: 2px;
+    }
+
+    .chat-msg.others {
+      align-self: flex-start;
+      background: #fff;
+      border-bottom-left-radius: 2px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .msg-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+      font-size: 0.8rem;
+    }
+
+    .msg-name {
+      font-weight: bold;
+      color: #2c3e50;
+    }
+
+    .msg-role {
+      font-size: 0.7rem;
+      color: #fff;
+      background: #34495e;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 8px;
+    }
+
+    .msg-role.admin {
+      background: #e74c3c;
+    }
+
+    .msg-role.recepcionista {
+      background: #f39c12;
+    }
+
+    .msg-role.doctor {
+      background: #27ae60;
+    }
+
+    .msg-time {
+      color: #95a5a6;
+      font-size: 0.75rem;
+    }
+
+    .msg-content {
+      color: #333;
+      line-height: 1.4;
+      font-size: 0.95rem;
+    }
+
+    .chat-input-area {
+      padding: 15px;
+      background: #fff;
+      border-top: 1px solid #eee;
+      display: flex;
+      gap: 10px;
+    }
+
+    .chat-input-area textarea {
+      flex: 1;
+      resize: vertical;
+      padding: 12px 15px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      min-height: 45px;
+      font-family: inherit;
+      font-size: 0.95rem;
+    }
+
+    .chat-input-area button {
+      border-radius: 50%;
+      width: 45px;
+      height: 45px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
 </head>
+
 <body>
 
   <!-- NAVBAR -->
@@ -36,9 +173,17 @@
         <i class="fas fa-calendar-plus"></i>
         <span>Agendar Citas</span>
       </li>
+      <li onclick="mostrarSeccion('calendario')">
+        <i class="fas fa-calendar-alt"></i>
+        <span>Calendario</span>
+      </li>
       <li onclick="mostrarSeccion('pacientes')">
         <i class="fas fa-users"></i>
         <span>Pacientes</span>
+      </li>
+      <li onclick="mostrarSeccion('mensajes-generales')">
+        <i class="fas fa-bullhorn"></i>
+        <span>General</span>
       </li>
       <li onclick="window.location.href='/perfil'">
         <i class="fas fa-user"></i>
@@ -179,6 +324,57 @@
         <!-- Lista de pacientes cargados -->
       </div>
     </section>
+    <!-- SECCION: CALENDARIO -->
+    <section id="calendario" class="seccion">
+      <div class="section-header">
+        <h2><i class="fas fa-calendar-alt"></i> Calendario de Citas</h2>
+      </div>
+
+      <!-- Filtro por doctor -->
+      <div class="card" style="margin-bottom: 20px;">
+        <div class="form-row" style="align-items: flex-end;">
+          <div class="form-group" style="flex: 1;">
+            <label for="calendarioDoctor">
+              <i class="fas fa-user-md"></i> Filtrar por Doctor
+            </label>
+            <select id="calendarioDoctor" class="form-control">
+              <option value="todos">Todos los doctores</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <button onclick="recargarCalendario()" class="btn-primary">
+              <i class="fas fa-sync-alt"></i> Actualizar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contenedor del calendario -->
+      <div id="calendario-container"></div>
+    </section>
+
+    <!-- SECCION: MENSAJES GENERALES -->
+    <section id="mensajes-generales" class="seccion">
+      <div class="section-header">
+        <h2><i class="fas fa-bullhorn"></i> Tablón General</h2>
+        <p style="color: #7f8c8d; margin-top: 5px;">Manda comunicados a todo el personal médico.</p>
+      </div>
+
+      <div class="chat-container">
+        <div class="chat-messages" id="chatGeneralMensajes">
+          <!-- Los mensajes se llenan aquí -->
+          <div class="empty-state">Cargando historial de mensajes...</div>
+        </div>
+
+        <div class="chat-input-area">
+          <textarea id="chatInputExtra"
+            placeholder="Escribe un anuncio para todos los doctores y administradores..."></textarea>
+          <button class="btn-primary" onclick="enviarMensajeGeneral()">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+      </div>
+    </section>
 
   </main>
 
@@ -210,13 +406,13 @@
         sec.classList.remove("activa");
       });
       document.getElementById(id).classList.add("activa");
-      
+
       // Actualizar active en sidebar
       document.querySelectorAll(".sidebar li").forEach(li => {
         li.classList.remove("active");
       });
       event.currentTarget.classList.add("active");
-      
+
       sidebar.classList.remove("open");
     }
 
@@ -226,7 +422,7 @@
       toast.textContent = mensaje;
       toast.className = `toast ${tipo}`;
       toast.style.display = 'block';
-      
+
       setTimeout(() => {
         toast.style.display = 'none';
       }, 3000);
@@ -368,44 +564,78 @@
         const citas = await res.json();
 
         const lista = document.getElementById("listaCitas");
-        
+
         if (citas.length === 0) {
           lista.innerHTML = '<div class="empty-state">No hay citas programadas para hoy</div>';
           return;
         }
 
-        lista.innerHTML = citas.map(c => `
-          <div class="cita-card ${c.estado.toLowerCase()}">
-            <div class="cita-hora">
-              <i class="fas fa-clock"></i>
-              <span>${c.hora}</span>
-            </div>
-            <div class="cita-info">
-              <div class="cita-paciente">
-                <i class="fas fa-user"></i> ${c.paciente}
+        lista.innerHTML = citas.map(c => {
+          // Asegurar que estado tenga un valor por defecto
+          const estado = c.estado || 'Programada';
+
+          return `
+            <div class="cita-card ${estado.toLowerCase()}">
+              <div class="cita-hora">
+                <i class="fas fa-clock"></i>
+                <span>${c.hora || 'Hora no disponible'}</span>
               </div>
+              <div class="cita-info">
+                <div class="cita-paciente">
+                  <i class="fas fa-user"></i> ${c.paciente || 'Paciente no disponible'}
+                </div>
               <div class="cita-doctor">
-                <i class="fas fa-user-md"></i> ${c.doctor}
+                <i class="fas fa-user-md"></i> ${c.doctor || 'Doctor no disponible'}
               </div>
               ${c.nota ? `<div class="cita-nota">📝 ${c.nota}</div>` : ''}
-            </div>
-            <div class="cita-estado">
-              <span class="estado-badge ${c.estado}">${c.estado}</span>
-            </div>
-            ${c.estado === 'Programada' ? `
-              <div class="cita-acciones">
-                <button onclick="cambiarEstado(${c.id}, 'Atendida')" class="btn-icon success" title="Marcar como atendida">
-                  <i class="fas fa-check"></i>
-                </button>
-                <button onclick="cambiarEstado(${c.id}, 'Cancelada')" class="btn-icon danger" title="Cancelar cita">
-                  <i class="fas fa-times"></i>
-                </button>
               </div>
-            ` : ''}
-          </div>
-        `).join('');
+              <div class="cita-estado">
+                <span class="estado-badge ${estado}">${estado}</span>
+              </div>
+              ${estado === 'Programada' ? `
+                <div class="cita-acciones">
+                  <button onclick="avisarLlegada('${c.paciente.replace(/'/g, "\\'")}', ${c.doctor_id}, ${c.id})" class="btn-icon warning" title="Notificar llegada al doctor">
+                    <i class="fas fa-bell"></i>
+                  </button>
+                  <button onclick="cambiarEstado(${c.id}, 'Atendida')" class="btn-icon success" title="Marcar como atendida">
+                    <i class="fas fa-check"></i>
+                  </button>
+                  <button onclick="cambiarEstado(${c.id}, 'Cancelada')" class="btn-icon danger" title="Cancelar cita">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('');
+
       } catch (error) {
         console.error('Error cargando citas:', error);
+        document.getElementById("listaCitas").innerHTML =
+          '<div class="empty-state error">Error al cargar las citas</div>';
+      }
+    }
+
+    // Enviar notificación a doctor persistiendo en base de datos
+    async function avisarLlegada(pacienteNombre, doctorId, citaId) {
+      if (!confirm(`¿Notificar al doctor la llegada de ${pacienteNombre}?`)) return;
+
+      try {
+        const res = await fetch(`/api/recepcion/citas/${citaId}/notificar`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ doctor_id: doctorId, paciente_nombre: pacienteNombre })
+        });
+
+        if (!res.ok) {
+          const error = await res.json();
+          throw new Error(error.error || 'Error enviando notificación');
+        }
+
+        mostrarToast("Aviso enviado al doctor", "success");
+      } catch (error) {
+        console.error("Error al notificar:", error);
+        mostrarToast(error.message, "error");
       }
     }
 
@@ -420,16 +650,17 @@
           body: JSON.stringify({ estado: nuevoEstado })
         });
 
-        const data = await res.json();
-
-        if (res.ok) {
-          mostrarToast(`Cita ${nuevoEstado.toLowerCase()}`, 'success');
-          cargarCitasHoy();
-        } else {
-          mostrarToast(data.message || 'Error al actualizar', 'error');
+        if (!res.ok) {
+          const error = await res.json();
+          throw new Error(error.message || 'Error al actualizar');
         }
+
+        mostrarToast(`Cita marcada como ${nuevoEstado}`, 'success');
+        cargarCitasHoy();
+
       } catch (error) {
-        mostrarToast('Error de conexión', 'error');
+        console.error('Error:', error);
+        mostrarToast(error.message, 'error');
       }
     }
 
@@ -437,19 +668,203 @@
     document.getElementById('buscarPaciente')?.addEventListener('input', (e) => {
       const termino = e.target.value.toLowerCase();
       const cards = document.querySelectorAll('.paciente-card');
-      
+
       cards.forEach(card => {
         const texto = card.textContent.toLowerCase();
         card.style.display = texto.includes(termino) ? 'flex' : 'none';
       });
     });
 
+    //Funciones de calendario
+    let calendar;
+
+    function inicializarCalendario() {
+      console.log("🚀 Inicializando calendario...");
+
+      const calendarEl = document.getElementById('calendario-container');
+      console.log("📦 Contenedor:", calendarEl);
+
+      if (!calendarEl) {
+        console.error("❌ No se encontró el elemento #calendario-container");
+        return;
+      }
+
+      calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'timeGridWeek',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        locale: 'es',
+        buttonText: {
+          today: 'Hoy',
+          month: 'Mes',
+          week: 'Semana',
+          day: 'Día'
+        },
+        slotMinTime: '08:00:00',
+        slotMaxTime: '20:00:00',
+        allDaySlot: false,
+        slotDuration: '00:30:00',
+        height: 'auto',
+        events: cargarEventosCalendario,
+        eventDidMount: function (info) {
+          console.log("Evento montado:", info.event.title);
+        }
+      });
+
+      calendar.render();
+      console.log("✅ Calendario renderizado");
+      cargarDoctoresCalendario();
+    }
+
+    async function cargarDoctoresCalendario() {
+      try {
+        const res = await fetch("/api/recepcion/doctores-lista");
+        const doctores = await res.json();
+
+        const select = document.getElementById("calendarioDoctor");
+        doctores.forEach(doc => {
+          const option = document.createElement("option");
+          option.value = doc.id;
+          option.textContent = `${doc.nombre} - ${doc.especialidad}`;
+          select.appendChild(option);
+        });
+      } catch (error) {
+        console.error("Error cargando doctores:", error);
+      }
+    }
+
+    async function cargarEventosCalendario(fetchInfo, successCallback, failureCallback) {
+      console.log("🔍 Cargando eventos reales...");
+
+      try {
+        const doctorId = document.getElementById("calendarioDoctor").value;
+        const fechaInicio = fetchInfo.startStr.split('T')[0];
+        const fechaFin = fetchInfo.endStr.split('T')[0];
+
+        const url = `/api/recepcion/citas-calendario?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}${doctorId !== 'todos' ? `&doctor_id=${doctorId}` : ''}`;
+
+        const res = await fetch(url);
+        const citas = await res.json();
+
+        console.log("✅ Citas reales recibidas:", citas);
+
+        if (citas.length === 0) {
+          successCallback([]);
+          return;
+        }
+
+        const eventos = citas.map(c => {
+          // 🔴 FORZAR formato de fecha YYYY-MM-DD
+          let fechaStr;
+          if (c.fecha && typeof c.fecha === 'object') {
+            // Si viene como objeto Date
+            const d = new Date(c.fecha);
+            fechaStr = d.toISOString().split('T')[0];
+          } else if (typeof c.fecha === 'string' && c.fecha.includes('T')) {
+            // Si viene como string ISO
+            fechaStr = c.fecha.split('T')[0];
+          } else {
+            // Si ya está en formato YYYY-MM-DD
+            fechaStr = c.fecha;
+          }
+
+          // 🔴 FORZAR formato de hora HH:MM:SS
+          let horaStr = c.hora;
+          if (horaStr && horaStr.length === 5) {
+            // Si es HH:MM, convertir a HH:MM:SS
+            horaStr = horaStr + ':00';
+          } else if (horaStr && horaStr.length === 8) {
+            // Ya está en HH:MM:SS
+            horaStr = horaStr;
+          } else {
+            // Valor por defecto
+            horaStr = '09:00:00';
+          }
+
+          console.log(`📅 Cita real: ${fechaStr} ${horaStr} - ${c.paciente}`);
+
+          return {
+            id: c.id,
+            title: `${c.paciente} - ${c.doctor}`,
+            start: `${fechaStr}T${horaStr}`,
+            backgroundColor: colorPorEstado(c.estado),
+            borderColor: colorPorEstado(c.estado),
+            textColor: '#ffffff',
+            allDay: false
+          };
+        });
+
+        console.log("📊 Eventos reales generados:", eventos);
+        successCallback(eventos);
+
+      } catch (error) {
+        console.error("❌ Error:", error);
+        failureCallback(error);
+      }
+    }
+
+    function calcularHoraFin(fecha, hora) {
+      // Asegurar que hora tenga formato HH:MM
+      const horaParts = hora.split(':');
+      const horas = parseInt(horaParts[0]);
+      const minutos = parseInt(horaParts[1]) || 0;
+
+      // Crear fecha fin (30 minutos después)
+      const fechaFin = new Date(`${fecha}T${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}:00`);
+      fechaFin.setMinutes(fechaFin.getMinutes() + 30);
+
+      // Devolver en formato ISO
+      return fechaFin.toISOString();
+    }
+
+    function colorPorEstado(estado) {
+      switch (estado) {
+        case 'Programada': return '#0a3b5c';
+        case 'Atendida': return '#28a745';
+        case 'Cancelada': return '#dc3545';
+        default: return '#0a3b5c';
+      }
+    }
+
+    function recargarCalendario() {
+      if (calendar) {
+        calendar.refetchEvents();
+        mostrarToast('Calendario actualizado', 'success');
+      }
+    }
+
     // Inicializar
-    window.onload = () => {
+    window.onload = async () => {
       cargarPacientes();
       cargarDoctores();
       cargarCitasHoy();
+      inicializarCalendario();
+
+      // Escuchar autorizaciones de paso del doctor
+      try {
+        const sessionRes = await fetch("/check-session");
+        const sessionData = await sessionRes.json();
+        if (sessionData.autenticado && typeof socket !== 'undefined') {
+          const miId = sessionData.usuario.id;
+          socket.on(`recepcion-${miId}`, (data) => {
+            mostrarToast(`El doctor acaba de REVISAR y AUTORIZAR el paso a: ${data.paciente}`, 'success');
+            // Alerta sonora
+            try {
+              new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play().catch(() => { });
+            } catch (e) { }
+          });
+        }
+      } catch (error) {
+        console.error("Error al suscribirse al socket de autorizacion:", error);
+      }
     };
   </script>
+  <!-- Socket.io y lógica en tiempo real -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/realtime.js"></script>
 </body>
+
 </html>
